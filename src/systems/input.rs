@@ -6,7 +6,7 @@ use crate::AppState;
 
 /// System which checks if there was any keyboard/mouse input
 pub fn player_input(
-    mut last_time: Local<f64>,
+    mut last_time: Local<f64>, // Local variables are kept between System calls, Bevy is cool!
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     map: Res<Map>,
@@ -31,6 +31,7 @@ pub fn player_input(
     .add_system_set(SystemSet::on_update(AppState::AwaitingInput).with_run_criteria(FixedTimestep::step(0.5)).with_system(player_input))
     , but Bevy does not seem to like triggering a system on both a state change and fixed time interval.
     */
+
     // Delay only needs to be very small, 10ms.
     let delay: f64 = 0.00;
     let passed_time: f64 = time.elapsed_seconds_f64() - *last_time;
@@ -38,6 +39,8 @@ pub fn player_input(
         // If time interval too short, exit function prematurely
         return;
     }
+
+    // Update old time, to use for next user input
     // println!("Time passed: {}", passed_time);
     *last_time = time.elapsed_seconds_f64();
 
@@ -74,7 +77,7 @@ pub fn player_input(
     // println!("No player input detected");
 }
 
-/// Function which tries to move the player
+/// Function which tries to move the player, checks for collisions and out of bounds
 fn try_move_player(
     delta_x: i32,
     delta_y: i32,
@@ -84,6 +87,7 @@ fn try_move_player(
 ) {
     // println!("Trying to move player");
 
+    // Check if player tries to go out of bounds
     if player_pos.x + delta_x < 0
         || player_pos.x + delta_x > map.width as i32 - 1
         || player_pos.y + delta_y < 0

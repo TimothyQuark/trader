@@ -20,7 +20,7 @@ pub struct BottomSidebar;
 #[derive(Component)]
 pub struct TopSidebar;
 
-/// Entities that should be rendered to the screen
+/// Component that identifies entities that should be rendered to the terminal
 #[derive(Component)]
 pub struct Renderable {
     pub glyph: char,

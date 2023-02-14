@@ -5,10 +5,10 @@ use crate::text::char_to_cp437;
 /// Component that describes the kind of tile on a Map
 #[derive(PartialEq, Copy, Clone)]
 pub enum MapTileType {
-    Wall,
-    Floor,
-    DownStairs,
-    UpStairs,
+    Placeholder, // Should never be rendered unless there are problems
+    Wall,        // Walls in space :D
+    Space,       // Empty space
+    Planet,      // Planet entity
 }
 
 /// Resource that holds the game map
@@ -33,7 +33,7 @@ impl Default for Map {
 
         // Downstairs tiles so it is obvious this should not be used
         Self {
-            tiles: vec![MapTileType::DownStairs; (width * height) as usize],
+            tiles: vec![MapTileType::Placeholder; (width * height) as usize],
             width,
             height,
             revealed_tiles: vec![true; (width * height) as usize],
@@ -156,8 +156,8 @@ pub fn wall_glyph(map: &Map, x: i32, y: i32) -> u8 {
 pub fn maptile_to_cp437(tile: MapTileType) -> usize {
     match tile {
         MapTileType::Wall => char_to_cp437('#'),
-        MapTileType::Floor => char_to_cp437('.'),
-        MapTileType::DownStairs => char_to_cp437('↓'),
-        MapTileType::UpStairs => char_to_cp437('↑'),
+        MapTileType::Space => char_to_cp437('.'),
+        MapTileType::Placeholder => char_to_cp437('↓'),
+        MapTileType::Planet => char_to_cp437('O'),
     }
 }

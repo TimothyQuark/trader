@@ -8,7 +8,7 @@ pub fn apply_room_to_map(map: &mut Map, room: &Rect) {
             let idx = map.xy_idx(x, y);
             // println!("idx in apply_room_to_map. x: {}, y: {} idx: {}", x, y, idx);
             if idx > 0 && idx < ((map.width * map.height) - 1) as usize {
-                map.tiles[idx as usize] = MapTileType::Floor;
+                map.tiles[idx as usize] = MapTileType::Space;
             }
             // else {
             //     panic!(
@@ -23,22 +23,22 @@ pub fn apply_room_to_map(map: &mut Map, room: &Rect) {
     }
 }
 
-pub fn draw_corridor(map: &mut Map, x1: i32, y1: i32, x2: i32, y2: i32) {
-    let mut x = x1;
-    let mut y = y1;
+// pub fn draw_corridor(map: &mut Map, x1: i32, y1: i32, x2: i32, y2: i32) {
+//     let mut x = x1;
+//     let mut y = y1;
 
-    while x != x2 || y != y2 {
-        if x < x2 {
-            x += 1;
-        } else if x > x2 {
-            x -= 1;
-        } else if y < y2 {
-            y += 1;
-        } else if y > y2 {
-            y -= 1;
-        }
+//     while x != x2 || y != y2 {
+//         if x < x2 {
+//             x += 1;
+//         } else if x > x2 {
+//             x -= 1;
+//         } else if y < y2 {
+//             y += 1;
+//         } else if y > y2 {
+//             y -= 1;
+//         }
 
-        let idx = map.xy_idx(x, y);
-        map.tiles[idx as usize] = MapTileType::Floor;
-    }
-}
+//         let idx = map.xy_idx(x, y);
+//         map.tiles[idx as usize] = MapTileType::Floor;
+//     }
+// }

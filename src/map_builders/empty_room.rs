@@ -8,7 +8,7 @@ use crate::geometry::Rect;
 pub struct EmptyRoomBuilder {
     map: Map,
     starting_position: Position,
-    depth: i32,
+    // depth: i32,
     // history: Vec<Map>,
     rects: Vec<Rect>,
 }
@@ -38,7 +38,7 @@ impl EmptyRoomBuilder {
             // TODO: Decouple map size from screen dimensions
             map: Map::new(40, 24),
             starting_position: Position { x: 0, y: 0 },
-            depth: 1,
+            // depth: 1,
             // history: Vec::new(),
             rects: Vec::new(),
         }

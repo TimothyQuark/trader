@@ -23,7 +23,8 @@ impl Position {
         // Parent position
         let &Position { x, y } = self;
 
-        // Note that moving diagonally has the same movement cost
+        // Filter the tiles that do not block
+        // Note that moving diagonally has the same movement cost as moving in cardinal directions.
         let list = vec![
             Position { x: x - 1, y: y + 1 },
             Position { x: x, y: y + 1 },

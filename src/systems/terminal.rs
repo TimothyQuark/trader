@@ -155,7 +155,8 @@ pub fn init_terminal(
     // Load the default tile sheet
     // Load sprite sheet into a texture atlas
     let texture_handle = assets.load("cp437_20x20_transparent.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(20.0, 20.0), 16, 16, None, None);
+    let texture_atlas =
+        TextureAtlas::from_grid(texture_handle, Vec2::new(20.0, 20.0), 16, 16, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     // Load the default font and text style, and add as a resource.
@@ -206,8 +207,8 @@ pub fn init_terminal(
             text: Text::from_section(
                 "You should not be seeing this text",
                 default_text_style.clone(),
-
-            ).with_alignment(TextAlignment {
+            )
+            .with_alignment(TextAlignment {
                 vertical: VerticalAlign::Center,
                 horizontal: HorizontalAlign::Left,
             }),
@@ -345,16 +346,16 @@ pub fn render_terminal(
                         wall_glyph(&map, map_x_idx as i32, map_y_idx as i32) as usize;
                     terminal.terminal_tiles[terminal_idx].1 = Color::BLUE;
                 }
-                MapTileType::Floor => {
+                MapTileType::Space => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('.');
                     terminal.terminal_tiles[terminal_idx].1 = Color::BLUE;
                 }
-                MapTileType::DownStairs => {
+                MapTileType::Placeholder => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('↓');
                     terminal.terminal_tiles[terminal_idx].1 = Color::GREEN;
                 }
-                MapTileType::UpStairs => {
-                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('↑');
+                MapTileType::Planet => {
+                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('O');
                     terminal.terminal_tiles[terminal_idx].1 = Color::GREEN;
                 }
             }
