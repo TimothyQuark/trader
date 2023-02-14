@@ -44,7 +44,7 @@ fn main() {
         // Important plugins and debug helpers
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
-                title: "DWorld".to_string(),
+                title: "Space Trader".to_string(),
                 width: screen_width as f32,
                 height: screen_height as f32,
                 resizable: false,
