@@ -1,0 +1,40 @@
+[package]
+name = "trader"
+version = "0.1.0"
+edition = "2021"
+authors = ["TimothyQuark"]
+description = "A small hobby Roguelike game which uses Bevy and the ESC design pattern"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/TimothyQuark/trader"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pathfinding = "3.0.11"
+rand =  {version = "0.8.4", features = ["small_rng"]}
+
+[dependencies.bevy]
+version = "0.9.1"
+default-features = true
+# These are the remaining default features other than `bevy_audio` and `mp3`.
+# Leave out unnecessary features.
+features = [
+    "dynamic" #dynamic compilation (remove when compiling game to be shipped!)
+#   "bevy_dynamic_plugin", # this is not dynamic compile
+#   "render",
+#   # "bevy_wgpu",
+#   "bevy_winit",
+#   "bevy_gilrs",
+#   "bevy_gltf",
+#   "png",
+#   "hdr",
+#   "x11",
+]
+
+[profile.dev]
+opt-level = 1
+
+# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
