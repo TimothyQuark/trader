@@ -20,9 +20,9 @@ default-features = true
 # These are the remaining default features other than `bevy_audio` and `mp3`.
 # Leave out unnecessary features.
 features = [
-    "dynamic" #dynamic compilation (remove when compiling game to be shipped!)
+    "dynamic", # dynamic compilation (remove when compiling game to be shipped!)
 #   "bevy_dynamic_plugin", # this is not dynamic compile
-#   "render",
+  "render",
 #   # "bevy_wgpu",
 #   "bevy_winit",
 #   "bevy_gilrs",
