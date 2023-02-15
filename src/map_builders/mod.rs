@@ -7,11 +7,10 @@ use crate::components::{living::Player, map::Position};
 use crate::systems::map::Map;
 use crate::AppState;
 
-// mod bsp_dungeon;
-// use bsp_dungeon::BspDungeonBuilder;
-
 mod empty_room;
 use empty_room::EmptyRoomBuilder;
+mod empty_space;
+use empty_space::EmptySpaceBuilder;
 
 mod common;
 // use common::apply_room_to_map;
@@ -34,7 +33,7 @@ pub fn build_new_map(
     match rng {
         // 0 so rng will never select this builder
         0 => {
-            result = Box::new(EmptyRoomBuilder::new(new_depth));
+            result = Box::new(EmptySpaceBuilder::new(new_depth));
             result.build_map();
         }
 

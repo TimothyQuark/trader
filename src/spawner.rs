@@ -143,13 +143,13 @@ fn spawn_entity(commands: &mut Commands, spawn: &(&usize, &String), map: &Map) {
     // println!("Spawned a {}", spawn.1);
 }
 
-fn orc(commands: &mut Commands, x: i32, y: i32) {
-    monster(commands, x, y, 'o', "Orc");
-}
-/// Spawn a goblin. Public function because it is often used for testing
-pub fn goblin(commands: &mut Commands, x: i32, y: i32) {
-    monster(commands, x, y, 'g', "Goblin");
-}
+// fn orc(commands: &mut Commands, x: i32, y: i32) {
+//     monster(commands, x, y, 'o', "Orc");
+// }
+// /// Spawn a goblin. Public function because it is often used for testing
+// pub fn goblin(commands: &mut Commands, x: i32, y: i32) {
+//     monster(commands, x, y, 'g', "Goblin");
+// }
 
 fn monster<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, name: S) {
     // ecs.create_entity()
@@ -185,35 +185,35 @@ fn monster<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, na
         .insert(BlockTile {});
 }
 
-fn health_potion(commands: &mut Commands, x: i32, y: i32) {
-    // ecs.create_entity()
-    //     .with(Position { x, y })
-    //     .with(Renderable {
-    //         glyph: rltk::to_cp437('¡'),
-    //         fg: RGB::named(rltk::MAGENTA),
-    //         bg: RGB::named(rltk::BLACK),
-    //         render_order: 2,
-    //     })
-    //     .with(Name {
-    //         name: "Health Potion".to_string(),
-    //     })
-    //     .with(Item {})
-    //     .with(Consumable {})
-    //     .with(ProvidesHealing { heal_amount: 8 })
-    //     .marked::<SimpleMarker<SerializeMe>>()
-    //     .build();
+// fn health_potion(commands: &mut Commands, x: i32, y: i32) {
+//     // ecs.create_entity()
+//     //     .with(Position { x, y })
+//     //     .with(Renderable {
+//     //         glyph: rltk::to_cp437('¡'),
+//     //         fg: RGB::named(rltk::MAGENTA),
+//     //         bg: RGB::named(rltk::BLACK),
+//     //         render_order: 2,
+//     //     })
+//     //     .with(Name {
+//     //         name: "Health Potion".to_string(),
+//     //     })
+//     //     .with(Item {})
+//     //     .with(Consumable {})
+//     //     .with(ProvidesHealing { heal_amount: 8 })
+//     //     .marked::<SimpleMarker<SerializeMe>>()
+//     //     .build();
 
-    commands
-        .spawn()
-        .insert(Position { x, y })
-        .insert(Renderable {
-            glyph: '¡',
-            fg: Color::YELLOW,
-            bg: Color::BLACK,
-            render_order: 1,
-        })
-        .insert(Name {
-            name: "Health Potion".to_string(),
-            l_name: Some("Rejuvenating Potion of Good Health".to_string()),
-        });
-}
+//     commands
+//         .spawn()
+//         .insert(Position { x, y })
+//         .insert(Renderable {
+//             glyph: '¡',
+//             fg: Color::YELLOW,
+//             bg: Color::BLACK,
+//             render_order: 1,
+//         })
+//         .insert(Name {
+//             name: "Health Potion".to_string(),
+//             l_name: Some("Rejuvenating Potion of Good Health".to_string()),
+//         });
+// }

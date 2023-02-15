@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::systems::map::Map;
 
-/// Component that describes position on the Map
+/// Component that describes xy position on the Map
 #[derive(Component, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Position {
     pub x: i32,

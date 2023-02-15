@@ -1,14 +1,17 @@
 use bevy::prelude::*;
 
-use crate::text::char_to_cp437;
+// use crate::text::char_to_cp437;
 
 /// Component that describes the kind of tile on a Map
 #[derive(PartialEq, Copy, Clone)]
 pub enum MapTileType {
     Placeholder, // Should never be rendered unless there are problems
-    Wall,        // Walls in space :D
-    Space,       // Empty space
-    Planet,      // Planet entity
+    Space,       // Empty space. Non blocker
+    Wormhole,    // Basically stairs, used to travel to new maps. Non blocker
+    Planet,      // Planet entity. Non blocker
+    Star,        // Star in middle of map. Blocker
+    Moon,        // Moons orbit planets. Non blocker
+    Asteroid,    // Space debris. Blocker
 }
 
 /// Resource that holds the game map
@@ -25,13 +28,13 @@ pub struct Map {
 }
 
 impl Default for Map {
-    /// Create a tile map of walls
+    /// Create a 40 by 24 tile map of walls
     fn default() -> Self {
         // println!("Default map initialized (still need to add as a resource)");
         let width: u32 = 40;
         let height: u32 = 24;
 
-        // Downstairs tiles so it is obvious this should not be used
+        // Placeholder tiles so it is obvious this should not be used
         Self {
             tiles: vec![MapTileType::Placeholder; (width * height) as usize],
             width,
@@ -44,10 +47,10 @@ impl Default for Map {
 }
 
 impl Map {
-    /// Create a new map consisting of only Wall tiles
+    /// Create a new map consisting of only Space tiles
     pub fn new(width: u32, height: u32) -> Map {
         let map = Map {
-            tiles: vec![MapTileType::Wall; (width * height) as usize],
+            tiles: vec![MapTileType::Space; (width * height) as usize],
             width,
             height,
             revealed_tiles: vec![true; (width * height) as usize],
@@ -74,11 +77,22 @@ impl Map {
         (x, y)
     }
 
-    /// Iterate through all map tiles, and determine if the terrain is blocking
+    /// Iterate through all map tiles, and determine if the terrain is blocking (blocks )
     /// (Ignores entities on top of the map tile)
     pub fn populate_blocked(&mut self) {
         for (i, tile) in self.tiles.iter_mut().enumerate() {
-            self.blocked_tiles[i] = *tile == MapTileType::Wall;
+            // Explicit match statement so I never accidentally forget to define a tile type. Wasteful, but safer
+            let mut blocked = false;
+            match tile {
+                MapTileType::Placeholder => blocked = true,
+                MapTileType::Space => {}
+                MapTileType::Wormhole => {}
+                MapTileType::Planet => {}
+                MapTileType::Star => blocked = true,
+                MapTileType::Moon => {}
+                MapTileType::Asteroid => blocked = true,
+            }
+            self.blocked_tiles[i] = blocked;
         }
     }
 
@@ -98,11 +112,11 @@ pub fn init_map(mut commands: Commands) {
     commands.insert_resource(map);
 }
 
-/// Check if a map tile is a wall and is revealed (useful for rendering)
-fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
+/// Check if a map tile is a planet and is revealed (useful for rendering)
+fn is_revealed_and_planet(map: &Map, x: i32, y: i32) -> bool {
     let idx = map.xy_idx(x, y);
     // println!("x: {}, y: {}, idx: {}", x, y, idx);
-    map.tiles[idx] == MapTileType::Wall && map.revealed_tiles[idx]
+    map.tiles[idx] == MapTileType::Planet && map.revealed_tiles[idx]
 }
 
 /// Determines the correct wall glyph to be used for a wall tile,
@@ -116,16 +130,16 @@ pub fn wall_glyph(map: &Map, x: i32, y: i32) -> u8 {
 
     let mut mask: u8 = 0;
 
-    if is_revealed_and_wall(map, x, y - 1) {
+    if is_revealed_and_planet(map, x, y - 1) {
         mask += 1;
     }
-    if is_revealed_and_wall(map, x, y + 1) {
+    if is_revealed_and_planet(map, x, y + 1) {
         mask += 2;
     }
-    if is_revealed_and_wall(map, x - 1, y) {
+    if is_revealed_and_planet(map, x - 1, y) {
         mask += 4;
     }
-    if is_revealed_and_wall(map, x + 1, y) {
+    if is_revealed_and_planet(map, x + 1, y) {
         mask += 8;
     }
 
@@ -151,13 +165,15 @@ pub fn wall_glyph(map: &Map, x: i32, y: i32) -> u8 {
     }
 }
 
-/// Convert a map tile to cp437 code
-#[allow(dead_code)]
-pub fn maptile_to_cp437(tile: MapTileType) -> usize {
-    match tile {
-        MapTileType::Wall => char_to_cp437('#'),
-        MapTileType::Space => char_to_cp437('.'),
-        MapTileType::Placeholder => char_to_cp437('↓'),
-        MapTileType::Planet => char_to_cp437('O'),
-    }
-}
+// /// Convert a map tile to cp437 code
+// #[allow(dead_code)]
+// pub fn maptile_to_cp437(tile: MapTileType) -> usize {
+//     match tile {
+//         MapTileType::Space => char_to_cp437('.'),
+//         MapTileType::Placeholder => char_to_cp437('↓'),
+//         MapTileType::Planet => char_to_cp437('O'),
+//         MapTileType::Wormhole => char_to_cp437('!'),
+//         MapTileType::Star => char_to_cp437('$'),
+//         MapTileType::Moon => char_to_cp437('o'),
+//     }
+// }
