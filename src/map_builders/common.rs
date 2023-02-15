@@ -2,6 +2,7 @@ use crate::geometry::Rect;
 use crate::systems::map::Map;
 use crate::systems::map::MapTileType;
 
+/// Cut a rectangle of empty space
 pub fn apply_room_to_map(map: &mut Map, room: &Rect) {
     for y in room.y1 + 1..=room.y2 {
         for x in room.x1 + 1..=room.x2 {

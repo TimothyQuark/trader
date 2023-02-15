@@ -6,6 +6,7 @@ use bevy::prelude::*;
 #[derive(PartialEq, Copy, Clone)]
 pub enum MapTileType {
     Placeholder, // Should never be rendered unless there are problems
+    Wall,        // Defines edge of map. Blocker
     Space,       // Empty space. Non blocker
     Wormhole,    // Basically stairs, used to travel to new maps. Non blocker
     Planet,      // Planet entity. Non blocker
@@ -47,10 +48,10 @@ impl Default for Map {
 }
 
 impl Map {
-    /// Create a new map consisting of only Space tiles
+    /// Create a new map consisting of only Wall tiles (and then carve out playing area)
     pub fn new(width: u32, height: u32) -> Map {
         let map = Map {
-            tiles: vec![MapTileType::Space; (width * height) as usize],
+            tiles: vec![MapTileType::Wall; (width * height) as usize],
             width,
             height,
             revealed_tiles: vec![true; (width * height) as usize],
@@ -60,6 +61,12 @@ impl Map {
         // println!("New Map created (still need to add as a resource)");
 
         map
+    }
+
+    /// Total number of tiles in map
+    pub fn total_tiles(&self) -> u32 {
+        // TODO: Replace all manual calculations in my code with this function
+        return self.width * self.height;
     }
 
     /// Converts XY coordinate to index in tile vec
@@ -85,6 +92,7 @@ impl Map {
             let mut blocked = false;
             match tile {
                 MapTileType::Placeholder => blocked = true,
+                MapTileType::Wall => blocked = true,
                 MapTileType::Space => {}
                 MapTileType::Wormhole => {}
                 MapTileType::Planet => {}

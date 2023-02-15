@@ -4,7 +4,7 @@ use crate::components::map::Position;
 use crate::components::rendering::{
     BottomSidebar, Renderable, RightSidebar, TerminalTile, TopSidebar,
 };
-use crate::systems::map::{Map, MapTileType};
+use crate::systems::map::{wall_glyph, Map, MapTileType};
 use crate::text::char_to_cp437;
 use crate::text::{default_textstyle, DefaultTextStyle};
 
@@ -344,6 +344,11 @@ pub fn render_terminal(
                 MapTileType::Space => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('.');
                     terminal.terminal_tiles[terminal_idx].1 = Color::BLACK;
+                }
+                MapTileType::Wall => {
+                    terminal.terminal_tiles[terminal_idx].0 =
+                        wall_glyph(&map, map_x_idx as i32, map_y_idx as i32) as usize;
+                    terminal.terminal_tiles[terminal_idx].1 = Color::BLUE;
                 }
                 MapTileType::Placeholder => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('↓');

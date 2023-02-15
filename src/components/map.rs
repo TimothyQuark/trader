@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::systems::map::Map;
+use crate::systems::map::{Map, MapTileType};
 
 /// Component that describes xy position on the Map
 #[derive(Component, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -43,9 +43,24 @@ impl Position {
         list
     }
 
-    // pub fn as_tuple(&self) -> (i32, i32) {
-    //     (self.x, self.y)
-    // }
+    /// All neighboring tiles filtered for a specific MapTileType
+    pub fn neighbors(&self, map: &Map, maptile: MapTileType) -> Vec<Position> {
+        let &Position { x, y } = self;
+        let list = vec![
+            Position { x: x - 1, y: y + 1 },
+            Position { x: x, y: y + 1 },
+            Position { x: x + 1, y: y + 1 },
+            Position { x: x - 1, y: y },
+            Position { x: x + 1, y: y },
+            Position { x: x - 1, y: y - 1 },
+            Position { x: x, y: y - 1 },
+            Position { x: x + 1, y: y + 1 },
+        ]
+        .into_iter()
+        .filter(|p| map.tiles[map.xy_idx(p.x, p.y)] == maptile)
+        .collect();
+        list
+    }
 }
 
 /// Component that states an entity is a blocker. Note that this is not used
