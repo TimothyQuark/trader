@@ -1,6 +1,11 @@
 use bevy::prelude::*;
 
-use crate::components::{living::Player, map::Position, rendering::Renderable};
+use crate::components::{
+    common::{Name, WaitTime},
+    living::Player,
+    map::Position,
+    rendering::Renderable,
+};
 
 /// Spawn the player entity
 pub fn init_player(mut commands: Commands) {
@@ -9,6 +14,11 @@ pub fn init_player(mut commands: Commands) {
     let _player = commands
         .spawn_empty()
         .insert(Player)
+        .insert(Name {
+            name: String::from("Player"),
+            l_name: None,
+        })
+        .insert(WaitTime { turns: 0 })
         .insert(Renderable {
             glyph: '@',
             fg: Color::WHITE,

@@ -4,9 +4,6 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Player;
 
-/// Component that identifies a ship that is not the player
+/// Component that identifies a pirate ship
 #[derive(Component)]
-pub struct Ship {}
-
-/// Component that identifies a planet
-pub struct Planet {}
+pub struct Pirate {}

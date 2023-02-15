@@ -14,10 +14,12 @@ use systems::{
     map::init_map,
     map_indexing::map_indexing,
     player::init_player,
-    terminal::{init_terminal, render_terminal, Terminal},
+    terminal::{init_terminal, render_terminal, update_sidebars, Terminal},
+    time::Time,
 };
 
 mod geometry;
+mod spawner;
 mod text;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -26,7 +28,7 @@ pub enum AppState {
     NewGame,
     InGame,
     AwaitingInput,
-    MonsterTurn,
+    TransitionTime,
 }
 
 fn main() {
@@ -41,6 +43,7 @@ fn main() {
         // Resources
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(terminal)
+        .insert_resource(Time { tick: 0 })
         // Important plugins and debug helpers
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
@@ -62,9 +65,11 @@ fn main() {
         .add_startup_system(init_map)
         .add_startup_system(init_player)
         .add_system_set(SystemSet::on_enter(AppState::NewGame).with_system(build_new_map))
-        // Normal Systems
+        // Render Systems
         .add_system(render_terminal)
+        .add_system(update_sidebars)
         .add_system(map_indexing)
+        // Game Systems
         .add_system_set(SystemSet::on_update(AppState::AwaitingInput).with_system(player_input))
         .run();
 }

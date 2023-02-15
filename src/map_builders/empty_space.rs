@@ -7,12 +7,14 @@ use rand::{
 use super::{common::apply_room_to_map, Map, MapBuilder};
 use crate::components::map::Position;
 use crate::geometry::Rect;
+use crate::spawner::spawn_room;
 use crate::systems::map::MapTileType;
 
 pub struct EmptySpaceBuilder {
     map: Map,
     starting_position: Position,
     depth: i32,
+    room: Rect,
 }
 
 impl MapBuilder for EmptySpaceBuilder {
@@ -28,7 +30,9 @@ impl MapBuilder for EmptySpaceBuilder {
         self.build()
     }
 
-    fn spawn_entities(&mut self, commands: &mut Commands) {}
+    fn spawn_entities(&mut self, commands: &mut Commands) {
+        spawn_room(commands, &self.room, &self.map, self.depth);
+    }
 }
 
 impl EmptySpaceBuilder {
@@ -37,6 +41,7 @@ impl EmptySpaceBuilder {
             map: Map::new(40, 24),
             starting_position: Position { x: 0, y: 0 },
             depth: 0,
+            room: Rect::new(0, 0, 1, 1),
         }
     }
 
@@ -45,9 +50,8 @@ impl EmptySpaceBuilder {
         // let mut rng = SmallRng::seed_from_u64(100); // Static seed
 
         // Create edge of map (explicit so player knows)
-        let first_room: Rect =
-            Rect::new(0, 0, self.map.width as i32 - 2, self.map.height as i32 - 2);
-        apply_room_to_map(&mut self.map, &first_room);
+        self.room = Rect::new(0, 0, self.map.width as i32 - 2, self.map.height as i32 - 2);
+        apply_room_to_map(&mut self.map, &self.room);
 
         // Spawn star in middle of map
         let (center_x, center_y) = (self.map.width as i32 / 2, self.map.height as i32 / 2);
@@ -56,10 +60,10 @@ impl EmptySpaceBuilder {
 
         // Spawn 1-5 planets with different (i.e. unique) radii around star.
         // Don't spawn planets within 2 units of star, looks cleaner
-        let num_planets = rng.gen_range(1..=5);
-        println!("Number of planets generated: {}", num_planets);
-        let allowed_r = (3i32..i32::min(center_x, center_y)) // Don't allow radius out of screen range
-            .collect::<Vec<_>>();
+        let num_planets = rng.gen_range(0..=10);
+        // println!("Number of planets generated: {}", num_planets);
+        // Planets must be inside of system wall (-1) and min 2 tiles away from star (3)
+        let allowed_r = (3i32..i32::min(center_x - 1, center_y - 1)).collect::<Vec<_>>();
         let radii = allowed_r.iter().choose_multiple(&mut rng, num_planets);
         for &r in radii {
             let angle: f64 = rng.gen_range(0.0..360.0);
@@ -69,13 +73,12 @@ impl EmptySpaceBuilder {
             self.map.tiles[planet_idx as usize] = MapTileType::Planet;
 
             // Spawn moons around planets. 50% of no moon, 40% 1 moon, 10% 2 moon
-            // Moons spawn 1-3 tiles away from their planet
             let moon_choices = [0, 1, 2];
             let moon_weights = [0.6, 0.3, 0.1];
             let moon_dist = WeightedIndex::new(&moon_weights).unwrap();
 
             let num_moons = moon_choices[moon_dist.sample(&mut rng)];
-            println!("Number of moons generated: {}", num_moons);
+            // println!("Number of moons generated: {}", num_moons);
 
             for _ in 0..num_moons {
                 // Check random neighbors for empty spaces, place moons

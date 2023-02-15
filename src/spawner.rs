@@ -7,14 +7,14 @@ use rand::{Rng, SeedableRng};
 
 use crate::components::{
     common::Name,
-    living::Monster,
+    living::Pirate,
     map::{BlockTile, Position},
     rendering::Renderable,
 };
 use crate::geometry::Rect;
 use crate::systems::map::{Map, MapTileType};
 
-const MAX_MONSTERS: i32 = 4;
+const MAX_PIRATES: i32 = 4;
 
 pub struct RandomEntry {
     name: String,
@@ -74,10 +74,12 @@ impl RandomTable {
 
 fn room_table(map_depth: i32) -> RandomTable {
     RandomTable::new()
-        .add("Goblin", 10)
-        // .add("Orc", 1 + map_depth)
-        .add("Orc", 10)
-        .add("Health Potion", 7)
+        .add("Small Pirate", 10)
+        .add("Big Pirate", 2)
+    // .add("Goblin", 10)
+    // // .add("Orc", 1 + map_depth)
+    // .add("Orc", 10)
+    // .add("Health Potion", 7)
 }
 
 pub fn spawn_room(commands: &mut Commands, room: &Rect, map: &Map, map_depth: i32) {
@@ -86,7 +88,7 @@ pub fn spawn_room(commands: &mut Commands, room: &Rect, map: &Map, map_depth: i3
     for y in room.y1 + 1..room.y2 {
         for x in room.x1 + 1..room.x2 {
             let idx = map.xy_idx(x, y);
-            if map.tiles[idx] == MapTileType::Floor {
+            if map.tiles[idx] == MapTileType::Space {
                 possible_targets.push(idx);
             }
         }
@@ -101,10 +103,7 @@ pub fn spawn_region(commands: &mut Commands, area: &[usize], map: &Map, map_dept
     let mut areas: Vec<usize> = Vec::from(area);
 
     let mut rng = SmallRng::from_entropy();
-    let num_spawns = i32::min(
-        areas.len() as i32,
-        rng.gen_range(1..MAX_MONSTERS + 3) + (map_depth - 1) - 3,
-    );
+    let num_spawns = i32::min(areas.len() as i32, rng.gen_range(1..MAX_PIRATES));
     if num_spawns == 0 {
         return;
     }
@@ -131,9 +130,8 @@ fn spawn_entity(commands: &mut Commands, spawn: &(&usize, &String), map: &Map) {
     let y = (*spawn.0 as u32 / map.width) as i32;
 
     match spawn.1.as_ref() {
-        "Goblin" => goblin(commands, x, y),
-        "Orc" => orc(commands, x, y),
-        "Health Potion" => health_potion(commands, x, y),
+        "Small Pirate" => small_pirate(commands, x, y),
+        "Big Pirate" => big_pirate(commands, x, y),
         "None" => {}
         _ => {
             panic!("Attempting to spawn unknown entity: {}", spawn.1);
@@ -143,33 +141,9 @@ fn spawn_entity(commands: &mut Commands, spawn: &(&usize, &String), map: &Map) {
     // println!("Spawned a {}", spawn.1);
 }
 
-// fn orc(commands: &mut Commands, x: i32, y: i32) {
-//     monster(commands, x, y, 'o', "Orc");
-// }
-// /// Spawn a goblin. Public function because it is often used for testing
-// pub fn goblin(commands: &mut Commands, x: i32, y: i32) {
-//     monster(commands, x, y, 'g', "Goblin");
-// }
-
-fn monster<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, name: S) {
-    // ecs.create_entity()
-    //     .with(Position{ x, y })
-    //     .with(Renderable{
-    //         glyph,
-    //         fg: RGB::named(rltk::RED),
-    //         bg: RGB::named(rltk::BLACK),
-    //         render_order: 1
-    //     })
-    //     .with(Viewshed{ visible_tiles : Vec::new(), range: 8, dirty: true })
-    //     .with(Monster{})
-    //     .with(Name{ name : name.to_string() })
-    //     .with(BlocksTile{})
-    //     .with(CombatStats{ max_hp: 16, hp: 16, defense: 1, power: 4 })
-    //     .marked::<SimpleMarker<SerializeMe>>()
-    //     .build();
-
+fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, name: S) {
     commands
-        .spawn()
+        .spawn_empty()
         .insert(Position { x, y })
         .insert(Renderable {
             glyph,
@@ -177,12 +151,20 @@ fn monster<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, na
             bg: Color::BLACK,
             render_order: 2,
         })
-        .insert(Monster {})
+        .insert(Pirate {})
         .insert(Name {
             name: name.to_string(),
             l_name: None,
         })
         .insert(BlockTile {});
+}
+
+fn small_pirate(commands: &mut Commands, x: i32, y: i32) {
+    pirate(commands, x, y, 'p', "Small Pirate");
+}
+
+fn big_pirate(commands: &mut Commands, x: i32, y: i32) {
+    pirate(commands, x, y, 'P', "Small Pirate");
 }
 
 // fn health_potion(commands: &mut Commands, x: i32, y: i32) {

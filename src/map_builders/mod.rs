@@ -7,15 +7,17 @@ use crate::components::{living::Player, map::Position};
 use crate::systems::map::Map;
 use crate::AppState;
 
-mod empty_room;
-use empty_room::EmptyRoomBuilder;
+// mod empty_room;
+// use empty_room::EmptyRoomBuilder;
 mod empty_space;
 use empty_space::EmptySpaceBuilder;
 
 mod common;
 // use common::apply_room_to_map;
 
-// This is a system, but important enough to have in its own folder
+// Since this system is very large, warrents its own folder
+
+/// System which generates map, populates it with entities and does other tasks.
 pub fn build_new_map(
     mut commands: Commands,
     mut state: ResMut<State<AppState>>,

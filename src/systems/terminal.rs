@@ -1,10 +1,13 @@
 use bevy::prelude::*;
 
+use super::{
+    map::{wall_glyph, Map, MapTileType},
+    time::Time,
+};
 use crate::components::map::Position;
 use crate::components::rendering::{
     BottomSidebar, Renderable, RightSidebar, TerminalTile, TopSidebar,
 };
-use crate::systems::map::{wall_glyph, Map, MapTileType};
 use crate::text::char_to_cp437;
 use crate::text::{default_textstyle, DefaultTextStyle};
 
@@ -290,9 +293,10 @@ pub fn render_terminal(
     // mut commands: Commands,
     map: Res<Map>,
     mut terminal: ResMut<Terminal>,
+    time: Res<Time>,
     r_query: Query<(&Renderable, &Position), With<Renderable>>,
     // QuerySet limited to 4 QueryState
-    mut q: ParamSet<(
+    mut p: ParamSet<(
         Query<(&mut Transform, &mut TextureAtlasSprite, &TerminalTile), With<TerminalTile>>,
         Query<&mut Text, With<TopSidebar>>,
         Query<&mut Text, With<RightSidebar>>,
@@ -302,16 +306,16 @@ pub fn render_terminal(
     // Update text of the top sidebar
     // let mut top_sidebar = q.q1().single_mut();
     // top_sidebar.sections[0].value = terminal.top_sidebar_text.clone();
-    q.p1().single_mut().sections[0].value = terminal.top_sidebar_text.clone();
+    p.p1().single_mut().sections[0].value = terminal.top_sidebar_text.clone();
 
     // Update text of the right sidebar
-    for (idx, mut line) in q.p2().single_mut().sections.iter_mut().enumerate() {
+    for (idx, mut line) in p.p2().single_mut().sections.iter_mut().enumerate() {
         // line.value = "Test \n".to_string();
         line.value = terminal.right_sidebar_text[idx].clone();
     }
 
     // Update text of the bottom sidebar
-    for (idx, mut line) in q.p3().single_mut().sections.iter_mut().enumerate() {
+    for (idx, mut line) in p.p3().single_mut().sections.iter_mut().enumerate() {
         // line.value = "Test \n".to_string();
         line.value = terminal.bottom_sidebar_text[idx].clone();
     }
@@ -356,7 +360,7 @@ pub fn render_terminal(
                 }
                 MapTileType::Planet => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('O');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::BLUE;
+                    terminal.terminal_tiles[terminal_idx].1 = Color::SEA_GREEN;
                 }
                 MapTileType::Moon => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('o');
@@ -396,9 +400,15 @@ pub fn render_terminal(
 
     // Render the glyphs and colors of the terminal tiles
     // let query_iter = q.q0().iter_mut();
-    for tile in q.p0().iter_mut() {
+    for tile in p.p0().iter_mut() {
         let (_, mut sprite, tile_component) = tile;
         sprite.index = terminal.terminal_tiles[tile_component.idx].0;
         sprite.color = terminal.terminal_tiles[tile_component.idx].1;
     }
+}
+
+/// System that updates contents of sidebars by updating text inside the Terminal resource
+pub fn update_sidebars(mut commands: Commands, mut terminal: ResMut<Terminal>, time: Res<Time>) {
+    // Update top sidebar
+    terminal.top_sidebar_text = String::from(format!("Turn: {}", time.tick));
 }

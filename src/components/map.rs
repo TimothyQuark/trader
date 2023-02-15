@@ -2,6 +2,11 @@ use bevy::prelude::*;
 
 use crate::systems::map::{Map, MapTileType};
 
+/// Component that states an entity is a blocker. Note that this is not used
+/// for map tiles, which are not entities (Map is a resource)
+#[derive(Component)]
+pub struct BlockTile {}
+
 /// Component that describes xy position on the Map
 #[derive(Component, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Position {
@@ -62,8 +67,3 @@ impl Position {
         list
     }
 }
-
-/// Component that states an entity is a blocker. Note that this is not used
-/// for map tiles, which are not entities (Map is a resource)
-#[derive(Component)]
-pub struct BlockTile {}
