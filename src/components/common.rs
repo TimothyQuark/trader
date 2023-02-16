@@ -1,8 +1,10 @@
 use bevy::prelude::Component;
 
 /// Component that reveals short and long name of entity
+/// Name is used by Bevy to identify entities non-uniquely,\
+/// hence this name
 #[derive(Component)]
-pub struct Name {
+pub struct GameName {
     /// Short name
     pub name: String,
     /// Long name

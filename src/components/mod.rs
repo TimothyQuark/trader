@@ -4,6 +4,6 @@ pub mod gamelog;
 
 pub mod map;
 
-pub mod living;
+pub mod ships;
 
 pub mod common;

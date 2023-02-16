@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
 use crate::components::{
-    common::{Name, WaitTime},
-    living::Player,
+    common::{GameName, WaitTime},
     map::Position,
     rendering::Renderable,
+    ships::{Player, ShipStats},
 };
 
 /// Spawn the player entity
@@ -14,7 +14,8 @@ pub fn init_player(mut commands: Commands) {
     let _player = commands
         .spawn_empty()
         .insert(Player)
-        .insert(Name {
+        .insert(Name::new("Player")) // Used by Bevy, can see name in WorldDebugger
+        .insert(GameName {
             name: String::from("Player"),
             l_name: None,
         })
@@ -26,5 +27,13 @@ pub fn init_player(mut commands: Commands) {
             render_order: 0,
         })
         .insert(Position { x: 0, y: 0 })
+        .insert(ShipStats {
+            fuel: 100,
+            speed: 10,
+            storage: 1000,
+            health: 17,
+            armor: 5,
+            shields: 13,
+        })
         .id();
 }

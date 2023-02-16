@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::{
     map::{wall_glyph, Map, MapTileType},
-    time::Time,
+    time::GameTime,
 };
 use crate::components::map::Position;
 use crate::components::rendering::{
@@ -198,7 +198,8 @@ pub fn init_terminal(
                     texture_atlas: texture_atlas_handle.clone(),
                     ..Default::default()
                 })
-                .insert(TerminalTile { idx });
+                .insert(TerminalTile { idx })
+                .insert(Name::new("Tile"));
 
             idx += 1;
         }
@@ -226,7 +227,8 @@ pub fn init_terminal(
             },
             ..Default::default()
         })
-        .insert(TopSidebar);
+        .insert(TopSidebar)
+        .insert(Name::new("TopSideBar"));
 
     // Spawn bottom sidebar text
     commands
@@ -253,7 +255,8 @@ pub fn init_terminal(
             },
             ..Default::default()
         })
-        .insert(BottomSidebar);
+        .insert(BottomSidebar)
+        .insert(Name::new("BottomSidebar"));
 
     // Spawn right sidebar text
     commands
@@ -285,7 +288,8 @@ pub fn init_terminal(
             },
             ..Default::default()
         })
-        .insert(RightSidebar);
+        .insert(RightSidebar)
+        .insert(Name::new("RightSidebar"));
 }
 
 /// System that renders the terminal every frame.
@@ -293,7 +297,6 @@ pub fn render_terminal(
     // mut commands: Commands,
     map: Res<Map>,
     mut terminal: ResMut<Terminal>,
-    time: Res<Time>,
     r_query: Query<(&Renderable, &Position), With<Renderable>>,
     // QuerySet limited to 4 QueryState
     mut p: ParamSet<(
@@ -408,7 +411,8 @@ pub fn render_terminal(
 }
 
 /// System that updates contents of sidebars by updating text inside the Terminal resource
-pub fn update_sidebars(mut commands: Commands, mut terminal: ResMut<Terminal>, time: Res<Time>) {
+/// using data from other game resources
+pub fn update_sidebars(mut terminal: ResMut<Terminal>, time: Res<GameTime>) {
     // Update top sidebar
     terminal.top_sidebar_text = String::from(format!("Turn: {}", time.tick));
 }

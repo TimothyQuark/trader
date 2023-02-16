@@ -1,15 +1,16 @@
 use std::collections::HashMap;
 
-use bevy::prelude::{Color, Commands};
+use bevy::prelude::{Color, Commands, Name};
 
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
+use crate::components::common::WaitTime;
 use crate::components::{
-    common::Name,
-    living::Pirate,
+    common::GameName,
     map::{BlockTile, Position},
     rendering::Renderable,
+    ships::Pirate,
 };
 use crate::geometry::Rect;
 use crate::systems::map::{Map, MapTileType};
@@ -72,7 +73,7 @@ impl RandomTable {
     }
 }
 
-fn room_table(map_depth: i32) -> RandomTable {
+fn room_table(_map_depth: i32) -> RandomTable {
     RandomTable::new()
         .add("Small Pirate", 10)
         .add("Big Pirate", 2)
@@ -152,11 +153,13 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
             render_order: 2,
         })
         .insert(Pirate {})
-        .insert(Name {
+        .insert(GameName {
             name: name.to_string(),
             l_name: None,
         })
-        .insert(BlockTile {});
+        .insert(BlockTile {})
+        .insert(WaitTime { turns: 0 })
+        .insert(Name::new(name.to_string()));
 }
 
 fn small_pirate(commands: &mut Commands, x: i32, y: i32) {

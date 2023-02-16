@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::components::{living::Player, map::Position};
+use crate::components::{
+    common::WaitTime,
+    map::Position,
+    ships::{Player, ShipStats},
+};
 use crate::systems::map::Map;
 use crate::AppState;
 
@@ -11,7 +15,7 @@ pub fn player_input(
     keys: Res<Input<KeyCode>>,
     map: Res<Map>,
     mut state: ResMut<State<AppState>>,
-    mut query: Query<&mut Position, With<Player>>,
+    mut query: Query<(&mut Position, &mut WaitTime, &ShipStats), With<Player>>,
 ) {
     // See https://bevy-cheatbook.github.io/input/keyboard.html
 
@@ -35,6 +39,7 @@ pub fn player_input(
     // Delay only needs to be very small, 10ms.
     let delay: f64 = 0.00;
     let passed_time: f64 = time.elapsed_seconds_f64() - *last_time;
+    // println!("Passed time: {passed_time}"); // Game will lag with print statement
     if passed_time < delay {
         // If time interval too short, exit function prematurely
         return;
@@ -48,43 +53,53 @@ pub fn player_input(
 
     // Check diagonal movements before normal movements. Alternatively, check if
     // Shift or control are NOT pressed.
+    let mut moved = false;
     if keys.just_pressed(KeyCode::Right) && keys.pressed(KeyCode::LShift) {
         // println!("Right Shift pressed");
-        try_move_player(1, 1, &map, query.single_mut().as_mut(), &mut state);
+        moved = try_move_player(1, 1, &map, query.single_mut().0.as_mut(), &mut state);
     } else if keys.just_pressed(KeyCode::Right) && keys.pressed(KeyCode::LControl) {
         // println!("Right Control pressed");
-        try_move_player(1, -1, &map, query.single_mut().as_mut(), &mut state);
+        moved = try_move_player(1, -1, &map, query.single_mut().0.as_mut(), &mut state);
     } else if keys.just_pressed(KeyCode::Left) && keys.pressed(KeyCode::LShift) {
         // println!("Right key pressed");
-        try_move_player(-1, 1, &map, query.single_mut().as_mut(), &mut state);
+        moved = try_move_player(-1, 1, &map, query.single_mut().0.as_mut(), &mut state);
     } else if keys.just_pressed(KeyCode::Left) && keys.pressed(KeyCode::LControl) {
         // println!("Right key pressed");
-        try_move_player(-1, -1, &map, query.single_mut().as_mut(), &mut state);
+        moved = try_move_player(-1, -1, &map, query.single_mut().0.as_mut(), &mut state);
     } else if keys.just_pressed(KeyCode::Down) {
         // println!("Down key pressed");
-        try_move_player(0, -1, &map, query.single_mut().as_mut(), &mut state);
+        moved = try_move_player(0, -1, &map, query.single_mut().0.as_mut(), &mut state);
     } else if keys.just_pressed(KeyCode::Up) {
         // println!("Up key pressed");
-        try_move_player(0, 1, &map, query.single_mut().as_mut(), &mut state);
+        moved = try_move_player(0, 1, &map, query.single_mut().0.as_mut(), &mut state);
     } else if keys.just_pressed(KeyCode::Left) {
         // println!("Left key pressed");
-        try_move_player(-1, 0, &map, query.single_mut().as_mut(), &mut state);
+        moved = try_move_player(-1, 0, &map, query.single_mut().0.as_mut(), &mut state);
     } else if keys.just_pressed(KeyCode::Right) {
         // println!("Right key pressed");
-        try_move_player(1, 0, &map, query.single_mut().as_mut(), &mut state);
+        moved = try_move_player(1, 0, &map, query.single_mut().0.as_mut(), &mut state);
+    }
+
+    if moved {
+        query.single_mut().1.as_mut().turns += query.single_mut().2.speed as u64;
+        // println!(
+        //     "Player WaitingTime: {}",
+        //     query.single_mut().1.as_mut().turns
+        // );
     }
 
     // println!("No player input detected");
 }
 
-/// Function which tries to move the player, checks for collisions and out of bounds
+/// Function which tries to move the player, checks for collisions and out of bounds.
+/// Returns true if player was able to move
 fn try_move_player(
     delta_x: i32,
     delta_y: i32,
     map: &Map,
     player_pos: &mut Position,
     state: &mut State<AppState>,
-) {
+) -> bool {
     // println!("Trying to move player");
 
     // Check if player tries to go out of bounds
@@ -93,7 +108,7 @@ fn try_move_player(
         || player_pos.y + delta_y < 0
         || player_pos.y + delta_y > map.height as i32 - 1
     {
-        return;
+        return false;
     }
 
     let destination_idx = map.xy_idx(player_pos.x + delta_x, player_pos.y + delta_y);
@@ -104,6 +119,10 @@ fn try_move_player(
         player_pos.y = player_pos.y + delta_y;
 
         // Player movement succesful, end player turn. TODO: Right now commented out as there is no transition to AI state
-        // state.overwrite_replace(AppState::AwaitingInput).unwrap();
+        state.clear_schedule();
+        state.overwrite_replace(AppState::TransitionTime).unwrap();
+        return true;
     }
+
+    return false;
 }

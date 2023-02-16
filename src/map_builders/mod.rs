@@ -3,7 +3,7 @@ use bevy::prelude::*;
 // use rand::rngs::SmallRng;
 // use rand::{Rng, SeedableRng};
 
-use crate::components::{living::Player, map::Position};
+use crate::components::{map::Position, ships::Player};
 use crate::systems::map::Map;
 use crate::AppState;
 

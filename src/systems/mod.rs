@@ -14,6 +14,8 @@ pub mod map_indexing;
 
 pub mod time;
 
+pub mod debugging;
+
 // pub mod monster_ai;
 
 // /// Resource that contains the main random number generators
