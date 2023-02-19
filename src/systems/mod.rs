@@ -16,7 +16,7 @@ pub mod time;
 
 pub mod debugging;
 
-// pub mod monster_ai;
+pub mod monster_ai;
 
 // /// Resource that contains the main random number generators
 // pub struct RandomNumberGenerator {

@@ -12,11 +12,17 @@ pub struct Pirate {}
 pub struct ShipStats {
     // Misc Stats
     pub fuel: u32,
-    pub speed: u32, // Lower is better
+    pub speed: u64, // Movement speed, lower is better. Corresponds to turns in WaitingTime / GameTime ticks
     pub storage: u32,
 
     // Combat Stats
     pub health: u32,
     pub armor: u32,
     pub shields: u32,
+}
+
+#[derive(Component)]
+pub struct CombatStats {
+    pub melee_speed: u64, // Melee weapon speed, lower is better. Corresponds to turns in WaitingTime / GameTime ticks
+    pub ranged_speed: u64, // Ranged weapon speed, lower is better. Corresponds to turns in WaitingTime / GameTime ticks
 }

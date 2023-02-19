@@ -1,9 +1,11 @@
 // use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use bevy::ecs::schedule::ReportExecutionOrderAmbiguities;
+use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
 use bevy_inspector_egui::prelude::*;
 // use bevy_inspector_egui::quick::ResourceInspectorPlugin;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+// use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 mod map_builders;
 use map_builders::build_new_map;
@@ -17,6 +19,7 @@ use systems::{
     input::player_input,
     map::init_map,
     map_indexing::map_indexing,
+    monster_ai::{self, monster_ai},
     player::init_player,
     terminal::{init_terminal, render_terminal, update_sidebars, Terminal},
     time::{transition_time, GameTime},
@@ -63,12 +66,13 @@ fn main() {
             },
             ..default()
         }))
-        .add_plugin(WorldInspectorPlugin)
+        // .add_plugin(WorldInspectorPlugin)
         // .add_plugin(ResourceInspectorPlugin::<AppState>::default()) // Debug a resource
         // .add_plugin(LogDiagnosticsPlugin::default())
         // .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_system(bevy::window::close_on_esc) // Used for debugging
         // .add_system(debug_states)
+        // .init_resource::<ReportExecutionOrderAmbiguities>() // Use to look at execution order in LogPlugin
+        .add_system(bevy::window::close_on_esc) // Used for debugging
         // Startup systems
         .add_startup_system(init_camera.label("init_camera"))
         .add_startup_system(init_terminal)
@@ -79,10 +83,23 @@ fn main() {
         .add_system(update_sidebars)
         .add_system(map_indexing)
         // Game Systems
-        .add_system_set(SystemSet::on_enter(AppState::NewGame).with_system(build_new_map))
-        .add_system_set(SystemSet::on_update(AppState::AwaitingInput).with_system(player_input))
-        // Everything to do with time should be scheduled after TransitionTime
-        .add_system_set(SystemSet::on_update(AppState::TransitionTime).with_system(transition_time))
+        .add_system_set(
+            SystemSet::on_enter(AppState::NewGame)
+                .label("BuildMap")
+                .with_system(build_new_map),
+        )
+        .add_system_set(
+            SystemSet::on_update(AppState::AwaitingInput)
+                .label("PlayerTurn")
+                .with_system(player_input),
+        )
+        // Everything to do with time should be scheduled after time has been incremented
+        .add_system_set(
+            SystemSet::on_update(AppState::TransitionTime)
+                .with_system(transition_time)
+                .label("TimeSystemSet")
+                .with_system(monster_ai.after(transition_time)),
+        )
         // Debugging
         .run();
 }

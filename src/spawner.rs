@@ -6,6 +6,7 @@ use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
 use crate::components::common::WaitTime;
+use crate::components::ships::{CombatStats, ShipStats};
 use crate::components::{
     common::GameName,
     map::{BlockTile, Position},
@@ -159,7 +160,19 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
         })
         .insert(BlockTile {})
         .insert(WaitTime { turns: 0 })
-        .insert(Name::new(name.to_string()));
+        .insert(Name::new(name.to_string()))
+        .insert(ShipStats {
+            fuel: 100,
+            speed: 20,
+            storage: 50,
+            health: 3,
+            armor: 2,
+            shields: 4,
+        })
+        .insert(CombatStats {
+            melee_speed: 10,
+            ranged_speed: 20,
+        });
 }
 
 fn small_pirate(commands: &mut Commands, x: i32, y: i32) {
