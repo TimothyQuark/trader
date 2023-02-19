@@ -17,7 +17,7 @@ pub fn init_player(mut commands: Commands) {
         .insert(Ship)
         .insert(Name::new("Player")) // Used by Bevy, can see name in WorldDebugger
         .insert(GameName {
-            name: String::from("Player"),
+            name: String::from("Enterprise"),
             l_name: None,
         })
         .insert(WaitTime { turns: 0 })

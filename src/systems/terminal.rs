@@ -1,12 +1,18 @@
-use bevy::prelude::*;
+use bevy::{
+    prelude::*, reflect::erased_serde::__private::serde::__private::de::IdentifierDeserializer,
+};
 
 use super::{
     map::{wall_glyph, Map, MapTileType},
     time::GameTime,
 };
-use crate::components::map::Position;
-use crate::components::rendering::{
-    BottomSidebar, Renderable, RightSidebar, TerminalTile, TopSidebar,
+use crate::components::{
+    common::GameName,
+    rendering::{BottomSidebar, Renderable, RightSidebar, TerminalTile, TopSidebar},
+};
+use crate::components::{
+    map::Position,
+    ships::{CombatStats, Player, ShipStats},
 };
 use crate::text::char_to_cp437;
 use crate::text::{default_textstyle, DefaultTextStyle};
@@ -28,16 +34,16 @@ pub struct Terminal {
 
     pub terminal_tiles: Vec<(usize, Color)>, // Vec<(SpriteIndex, Color)
 
-    top_sidebar_text: String,
-    bottom_sidebar_text: Vec<String>,
-    right_sidebar_text: Vec<String>,
-
     // In number of tiles. Fully dimensions the terminal
     // TODO: Make private, accessible only with function. Also add calculation
     // for right_sidebar_width, not attribute but still useful.
     pub top_sidebar_height: u32,
     pub bottom_sidebar_height: u32,
     pub right_sidebar_width: u32,
+
+    top_sidebar_text: String,
+    bottom_sidebar_text: Vec<String>,
+    right_sidebar_text: Vec<String>,
 }
 
 impl Default for Terminal {
@@ -54,6 +60,10 @@ impl Default for Terminal {
         let terminal_width = screen_width / tile_size;
         let terminal_height = screen_height / tile_size;
 
+        let top_sidebar_height = 1;
+        let bottom_sidebar_height = 11;
+        let right_sidebar_width = 14;
+
         Self {
             tile_size,
             screen_width,
@@ -64,13 +74,17 @@ impl Default for Terminal {
                 (0, Color::BLUE);
                 (screen_width / tile_size * screen_height / tile_size) as usize
             ],
+            top_sidebar_height,
+            bottom_sidebar_height,
+            right_sidebar_width,
+
             top_sidebar_text: "This is default text".to_string(),
             bottom_sidebar_text: vec!["Bottom sidebar text (From Terminal) \n".to_string(); 11],
-            right_sidebar_text: vec!["Right sidebar text (From Terminal)\n".to_string(); 11],
-
-            top_sidebar_height: 1,
-            bottom_sidebar_height: 11,
-            right_sidebar_width: 14,
+            right_sidebar_text: vec![
+                "Right sidebar text (From Terminal)\n".to_string();
+                (terminal_height - bottom_sidebar_height - top_sidebar_height)
+                    as usize
+            ],
         }
     }
 }
@@ -268,8 +282,9 @@ pub fn init_terminal(
                         style: default_text_style.clone(),
                     };
                     // Number of sections should be as many lines as in the log
-                    // (terminal.terminal_height - terminal.top_sidebar_height) as usize
-                    3
+                    (terminal.terminal_height - terminal.top_sidebar_height - terminal.bottom_sidebar_height) as usize
+
+
                 ],
                 alignment: TextAlignment {
                     vertical: VerticalAlign::Top,
@@ -412,7 +427,43 @@ pub fn render_terminal(
 
 /// System that updates contents of sidebars by updating text inside the Terminal resource
 /// using data from other game resources
-pub fn update_sidebars(mut terminal: ResMut<Terminal>, time: Res<GameTime>) {
+pub fn update_sidebars(
+    mut terminal: ResMut<Terminal>,
+    time: Res<GameTime>,
+    query: Query<(&ShipStats, &CombatStats, &GameName), With<Player>>,
+) {
+    let (ship_stats, combat_stats, name) = query.single();
     // Update top sidebar
     terminal.top_sidebar_text = String::from(format!("Turn: {}", time.tick));
+
+    // Update right sidebar
+    for (idx, line) in &mut terminal.right_sidebar_text.iter_mut().enumerate() {
+        line.clear();
+        line.push_str("  ");
+        match idx {
+            0 => line.push_str(&format!("{}'s Stats\n", name.name)),
+            1 => *line += "\n",
+            2 => line.push_str(&format!(
+                "Health: {}/{}\n",
+                ship_stats.health, ship_stats.health
+            )),
+            3 => line.push_str(&format!("Fuel: {}\n", ship_stats.fuel)),
+            4 => line.push_str(&format!("Flying Speed: {}\n", ship_stats.speed)),
+            5 => line.push_str(&format!(
+                "Storage: {}/{}\n",
+                ship_stats.storage, ship_stats.storage
+            )), // TODO: Show this as a fraction (ex 45/245)
+            6 => *line += "\n",
+            7 => line.push_str(&format!("Armor: {}\n", ship_stats.armor)),
+            8 => line.push_str(&format!(
+                "Shields: {}/{}\n",
+                ship_stats.shields, ship_stats.shields
+            )), // TODO: Show as fraction
+            9 => line.push_str(&format!("Gatling Firerate: {}\n", combat_stats.melee_speed)),
+            10 => line.push_str(&format!("Gatling Damage: {}\n", combat_stats.melee_dmg)),
+            11 => line.push_str(&format!("Laser Firerate: {}\n", combat_stats.ranged_speed)),
+            12 => line.push_str(&format!("Laser Damage: {}\n", combat_stats.ranged_dmg)),
+            _ => {}
+        }
+    }
 }
