@@ -83,6 +83,7 @@ fn main() {
         .add_system(update_sidebars)
         .add_system(map_indexing)
         // Game Systems
+        // TODO: On new game, clear the World
         .add_system_set(
             SystemSet::on_enter(AppState::NewGame)
                 .label("BuildMap")

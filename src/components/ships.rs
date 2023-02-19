@@ -8,7 +8,8 @@ pub struct Player;
 #[derive(Component)]
 pub struct Pirate {}
 
-#[derive(Component)]
+/// Component containing non combat stats of ships
+#[derive(Component, Debug)]
 pub struct ShipStats {
     // Misc Stats
     pub fuel: u32,
@@ -21,8 +22,11 @@ pub struct ShipStats {
     pub shields: u32,
 }
 
+/// Component containing combat stats of ships
 #[derive(Component)]
 pub struct CombatStats {
     pub melee_speed: u64, // Melee weapon speed, lower is better. Corresponds to turns in WaitingTime / GameTime ticks
+    pub melee_dmg: u32,
     pub ranged_speed: u64, // Ranged weapon speed, lower is better. Corresponds to turns in WaitingTime / GameTime ticks
+    pub ranged_dmg: u32,
 }

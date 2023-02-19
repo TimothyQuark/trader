@@ -10,13 +10,16 @@ use crate::components::{
 use crate::systems::map::Map;
 use crate::AppState;
 
+use super::time::GameTime;
+
 /// System responsible for pirate behaviour
 /// Only runs when current State is TransitionTime
 pub fn monster_ai(
     mut map: ResMut<Map>,
     mut state: ResMut<State<AppState>>,
+    time: Res<GameTime>,
     mut p: ParamSet<(
-        Query<(&mut Position, &mut WaitTime, &ShipStats, &CombatStats), With<Pirate>>,
+        Query<(Entity, &mut Position, &mut WaitTime, &ShipStats, &CombatStats), With<Pirate>>,
         Query<&Position, With<Player>>,
     )>,
 ) {
@@ -31,7 +34,8 @@ pub fn monster_ai(
 
     let mut query = p.p0();
 
-    for (mut mon_position, mut wait_time, ship_stats, combat_stats) in query.iter_mut() {
+    // When not debugging, use _mon_ent instead of _ so we remember next time
+    for (mon_ent, mut mon_position, mut wait_time, ship_stats, combat_stats) in query.iter_mut() {
         // println!(
         //     "Monster at position: x: {}, y: {}",
         //     mon_position.x, mon_position.y
@@ -45,6 +49,9 @@ pub fn monster_ai(
                 |p| (p.distance(&goal) / 3) as u32,
                 |p| *p == goal,
             );
+
+            println!("Monster {} takes a action on turn {}", mon_ent.index(), time.tick);
+
             // println!("Path: {:?}", result);
 
             // Path to player found
@@ -66,13 +73,13 @@ pub fn monster_ai(
                     wait_time.turns += ship_stats.speed;
                 } else if path.len() == 2 {
                     // Monster next to player (path is player_pos and mon_pos, hence len == 2), use melee attack
-                    println!("The monster attacks the player!");
+                    println!("The monster {} attacks the player on turn {})", mon_ent.index(), time.tick);
                     wait_time.turns += combat_stats.melee_speed;
                 } else {
                     panic!(
-                        "Monster is on top of player.\n Player at position: x: {}, y: {}\n Monster at position: x: {}, y: {} \n
+                        "Monster {} is on top of player.\n Player at position: x: {}, y: {}\n Monster at position: x: {}, y: {} \n
                         Path: {:?}",
-                        goal.x, goal.y, mon_position.x, mon_position.y, path
+                        mon_ent.index(), goal.x, goal.y, mon_position.x, mon_position.y, path
                     )
                 }
             }
