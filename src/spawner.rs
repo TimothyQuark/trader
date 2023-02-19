@@ -11,7 +11,7 @@ use crate::components::{
     common::GameName,
     map::{BlockTile, Position},
     rendering::Renderable,
-    ships::Pirate,
+    ships::{Pirate, Ship},
 };
 use crate::geometry::Rect;
 use crate::systems::map::{Map, MapTileType};
@@ -153,7 +153,8 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
             bg: Color::BLACK,
             render_order: 2,
         })
-        .insert(Pirate {})
+        .insert(Pirate)
+        .insert(Ship)
         .insert(GameName {
             name: name.to_string(),
             l_name: None,

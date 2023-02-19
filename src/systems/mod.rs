@@ -16,6 +16,6 @@ pub mod time;
 
 pub mod debugging;
 
-pub mod monster_ai;
+pub mod pirate_ai;
 
 pub mod melee;

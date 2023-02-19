@@ -4,7 +4,7 @@ use crate::components::{
     common::{GameName, WaitTime},
     map::Position,
     rendering::Renderable,
-    ships::{CombatStats, Player, ShipStats},
+    ships::{CombatStats, Player, ShipStats, Ship},
 };
 
 /// Spawn the player entity
@@ -14,6 +14,7 @@ pub fn init_player(mut commands: Commands) {
     let _player = commands
         .spawn_empty()
         .insert(Player)
+        .insert(Ship)
         .insert(Name::new("Player")) // Used by Bevy, can see name in WorldDebugger
         .insert(GameName {
             name: String::from("Player"),

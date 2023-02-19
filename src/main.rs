@@ -19,7 +19,8 @@ use systems::{
     input::player_input,
     map::init_map,
     map_indexing::map_indexing,
-    monster_ai::{self, monster_ai},
+    melee::melee_combat_system,
+    pirate_ai::{self, monster_ai},
     player::init_player,
     terminal::{init_terminal, render_terminal, update_sidebars, Terminal},
     time::{transition_time, GameTime},
@@ -99,7 +100,8 @@ fn main() {
             SystemSet::on_update(AppState::TransitionTime)
                 .with_system(transition_time)
                 .label("TimeSystemSet")
-                .with_system(monster_ai.after(transition_time)),
+                .with_system(monster_ai.after(transition_time))
+                .with_system(melee_combat_system.after(transition_time)),
         )
         // Debugging
         .run();

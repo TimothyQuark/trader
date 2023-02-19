@@ -19,7 +19,16 @@ pub fn monster_ai(
     mut state: ResMut<State<AppState>>,
     time: Res<GameTime>,
     mut p: ParamSet<(
-        Query<(Entity, &mut Position, &mut WaitTime, &ShipStats, &CombatStats), With<Pirate>>,
+        Query<
+            (
+                Entity,
+                &mut Position,
+                &mut WaitTime,
+                &ShipStats,
+                &CombatStats,
+            ),
+            With<Pirate>,
+        >,
         Query<&Position, With<Player>>,
     )>,
 ) {
@@ -50,7 +59,11 @@ pub fn monster_ai(
                 |p| *p == goal,
             );
 
-            println!("Monster {} takes a action on turn {}", mon_ent.index(), time.tick);
+            // println!(
+            //     "Monster {} takes a action on turn {}",
+            //     mon_ent.index(),
+            //     time.tick
+            // );
 
             // println!("Path: {:?}", result);
 
@@ -73,7 +86,11 @@ pub fn monster_ai(
                     wait_time.turns += ship_stats.speed;
                 } else if path.len() == 2 {
                     // Monster next to player (path is player_pos and mon_pos, hence len == 2), use melee attack
-                    println!("The monster {} attacks the player on turn {})", mon_ent.index(), time.tick);
+                    println!(
+                        "The monster {} attacks the player on turn {})",
+                        mon_ent.index(),
+                        time.tick
+                    );
                     wait_time.turns += combat_stats.melee_speed;
                 } else {
                     panic!(

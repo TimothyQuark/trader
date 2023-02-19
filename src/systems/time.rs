@@ -19,7 +19,6 @@ pub fn transition_time(
     mut time: ResMut<GameTime>,
 ) {
     for mut t in query.iter_mut() {
-
         /*
         Note to self: on turn 0, we are in state AwaitingInput. The player then takes an action,
         and leaves player_input system. Then we increment time by 1. Thus, other entities' first action
@@ -34,7 +33,6 @@ pub fn transition_time(
 
         //
         if let Some(_) = t.1 {
-
             if t.0.turns == 0 {
                 // AwaitingInput will only become the state in next update step of game?
                 state.overwrite_replace(AppState::AwaitingInput).unwrap();

@@ -1,12 +1,18 @@
 use bevy::prelude::*;
 
+// TODO: Add Ship component
+
 /// Component that identifies the player ship
 #[derive(Component)]
 pub struct Player;
 
-/// Component that identifies a pirate ship
+/// Component that identifies a pirate
 #[derive(Component)]
-pub struct Pirate {}
+pub struct Pirate;
+
+/// Component that identifies a ship
+#[derive(Component)]
+pub struct Ship;
 
 /// Component containing non combat stats of ships
 #[derive(Component, Debug)]
@@ -18,8 +24,8 @@ pub struct ShipStats {
 
     // Combat Stats
     pub health: u32,
-    pub armor: u32,
-    pub shields: u32,
+    pub armor: u32,   // Flat reduction of melee attacks
+    pub shields: u32, // Absorbs ranged attacks, recharges over time
 }
 
 /// Component containing combat stats of ships

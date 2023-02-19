@@ -4,7 +4,7 @@ use crate::components::{
     combat::WantsToMelee,
     common::WaitTime,
     map::Position,
-    ships::{CombatStats, Player, ShipStats},
+    ships::{CombatStats, Player, ShipStats, Ship},
 };
 use crate::systems::map::Map;
 use crate::AppState;
@@ -22,14 +22,14 @@ enum PlayerAction {
 /// System which checks if there was any keyboard/mouse input
 pub fn player_input(
     mut last_time: Local<f64>, // Local variables are kept between System calls, Bevy is cool!
-    mut commands: Commands,
-    time: Res<Time>, // Bevy time
+    commands: Commands,
+    time: Res<Time>,          // Bevy time
     game_time: Res<GameTime>, // Game time in turns
     keys: Res<Input<KeyCode>>,
     map: Res<Map>,
     mut state: ResMut<State<AppState>>,
 
-    mut set: ParamSet<(
+    mut set: ParamSet<( //p0: player, p1: other ships
         Query<
             (
                 Entity,
@@ -38,9 +38,9 @@ pub fn player_input(
                 &ShipStats,
                 &CombatStats,
             ),
-            With<Player>,
+            (With<Player>, With<Ship>),
         >,
-        Query<(&mut Position, &mut WaitTime, &ShipStats), Without<Player>>,
+        Query<&mut Position, (Without<Player>, With<Ship>)>,
     )>,
 ) {
     // See https://bevy-cheatbook.github.io/input/keyboard.html
@@ -90,28 +90,28 @@ pub fn player_input(
     let mut moved = PlayerAction::NoAction;
     if keys.just_pressed(KeyCode::Right) && keys.pressed(KeyCode::LShift) {
         // println!("Right Shift pressed");
-        moved = try_move_player(1, 1, &map, commands, &mut set, &mut state);
+        moved = try_move_player(1, 1, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Right) && keys.pressed(KeyCode::LControl) {
         // println!("Right Control pressed");
-        moved = try_move_player(1, -1, &map, commands, &mut set, &mut state);
+        moved = try_move_player(1, -1, &map, commands, &game_time,&mut set);
     } else if keys.just_pressed(KeyCode::Left) && keys.pressed(KeyCode::LShift) {
         // println!("Right key pressed");
-        moved = try_move_player(-1, 1, &map, commands, &mut set, &mut state);
+        moved = try_move_player(-1, 1, &map, commands, &game_time,&mut set);
     } else if keys.just_pressed(KeyCode::Left) && keys.pressed(KeyCode::LControl) {
         // println!("Right key pressed");
-        moved = try_move_player(-1, -1, &map, commands, &mut set, &mut state);
+        moved = try_move_player(-1, -1, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Down) {
         // println!("Down key pressed");
-        moved = try_move_player(0, -1, &map, commands, &mut set, &mut state);
+        moved = try_move_player(0, -1, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Up) {
         // println!("Up key pressed");
-        moved = try_move_player(0, 1, &map, commands, &mut set, &mut state);
+        moved = try_move_player(0, 1, &map, commands, &game_time,&mut set);
     } else if keys.just_pressed(KeyCode::Left) {
         // println!("Left key pressed");
-        moved = try_move_player(-1, 0, &map, commands, &mut set, &mut state);
+        moved = try_move_player(-1, 0, &map, commands, &game_time,&mut set);
     } else if keys.just_pressed(KeyCode::Right) {
         // println!("Right key pressed");
-        moved = try_move_player(1, 0, &map, commands, &mut set, &mut state);
+        moved = try_move_player(1, 0, &map, commands, &game_time,&mut set);
     } else if keys.just_pressed(KeyCode::Period) {
         // println!("Pressed full stop");
         moved = PlayerAction::WaitTurn;
@@ -135,8 +135,6 @@ pub fn player_input(
         println!("Player took action {:?} on turn {}", moved, game_time.tick);
     }
 
-
-
     // println!("No player input detected");
 }
 
@@ -147,6 +145,7 @@ fn try_move_player(
     delta_y: i32,
     map: &Map,
     mut commands: Commands,
+    game_time: &Res<GameTime>, // Game time in turns
     p_set: &mut ParamSet<(
         Query<
             (
@@ -156,11 +155,10 @@ fn try_move_player(
                 &ShipStats,
                 &CombatStats,
             ),
-            With<Player>,
+            (With<Player>, With<Ship>),
         >,
-        Query<(&mut Position, &mut WaitTime, &ShipStats), Without<Player>>,
+        Query<&mut Position, (Without<Player>, With<Ship>)>,
     )>,
-    state: &mut State<AppState>,
 ) -> PlayerAction {
     // println!("Trying to move player");
 
@@ -180,22 +178,24 @@ fn try_move_player(
 
     // Check if player is trying to attack a neighboring tile
     for potential_target in map.tile_content[destination_idx].iter() {
-        if let Ok((pos, wait_time, ship_stats)) = p_set.p1().get_mut(*potential_target) {
-            println!(
-                "Player attack has found a target. Entity {} has stats {:?}",
-                potential_target.index(), ship_stats
-            );
+        if let Ok(_ship_stats) = p_set.p1().get_mut(*potential_target) {
+            // println!(
+            //     "Player attack has found a target. Entity {} has stats {:?}",
+            //     potential_target.index(),
+            //     ship_stats
+            // );
             if let Ok((player_entity, _, _, _, _)) = p_set.p0().get_single() {
                 commands.entity(player_entity).insert(WantsToMelee {
                     target: *potential_target,
                 });
+                println!("Player wants to melee entity {} on turn {}", potential_target.index(), game_time.tick);
             } else {
-                panic!("Player tried to target an enemy but it failed!");
+                panic!("Player tried to target entity {} but it failed!", potential_target.index());
             }
             // Attack is considered to be a
             return PlayerAction::MeleeAttack;
         } else {
-            panic!("Trying to target an entity that is not in the destination tile")
+            panic!("Trying to target an entity {} that is not in the destination tile", potential_target.index());
         }
         // TODO: Add waiting time
     }
