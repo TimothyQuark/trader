@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::components::{
     combat::{SufferDamage, WantsToMelee},
-    ships::{CombatStats, ShipStats, Ship},
+    ships::{CombatStats, Ship, ShipStats},
 };
 
 // TODO: Add With statements to ensure safety of Queries
@@ -17,12 +17,15 @@ pub fn melee_combat_system(
         if ship_stats.health > 0 {
             // Get target entity's stats
             println!(
-                "Entity {} wants to attack target {}",
+                "Entity {} wants to attack target {} for {} melee damage (pre mitigation)",
                 entity.index(),
-                wants_melee.target.index()
+                wants_melee.target.index(),
+                combat_stats.melee_dmg
             );
             // You can only get components that are in the Query
-            let target_stats = target_q.get_component::<ShipStats>(wants_melee.target).unwrap();
+            let target_stats = target_q
+                .get_component::<ShipStats>(wants_melee.target)
+                .unwrap();
 
             let damage = u32::max(0, combat_stats.melee_dmg - target_stats.armor);
             if damage == 0 {
@@ -35,13 +38,16 @@ pub fn melee_combat_system(
             } else {
                 // TODO: Print to game console, not terminal
                 println!(
-                    "Entity {} hurts entity {} for {} damage",
+                    "Entity {} hurts entity {} for {} melee damage (post mitigation)",
                     entity.index(),
                     wants_melee.target.index(),
                     damage
                 );
-                SufferDamage::new_damage(&mut commands, &mut target_q, wants_melee.target, 2);
+                SufferDamage::new_damage(&mut commands, &mut target_q, wants_melee.target, damage);
             }
         }
+
+        // Entity no longer wants to melee
+        commands.entity(entity).remove::<WantsToMelee>();
     }
 }

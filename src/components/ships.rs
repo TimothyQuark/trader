@@ -23,8 +23,8 @@ pub struct ShipStats {
     pub storage: u32,
 
     // Combat Stats
-    pub health: u32,
-    pub armor: u32,   // Flat reduction of melee attacks
+    pub health: i32, // Health can be negative, means entity is dead and should be removed
+    pub armor: u32,  // Flat reduction of melee attacks
     pub shields: u32, // Absorbs ranged attacks, recharges over time
 }
 

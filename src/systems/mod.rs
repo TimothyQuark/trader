@@ -19,3 +19,5 @@ pub mod debugging;
 pub mod pirate_ai;
 
 pub mod melee;
+
+pub mod damage_system;

@@ -4,7 +4,7 @@ use crate::components::{
     combat::WantsToMelee,
     common::WaitTime,
     map::Position,
-    ships::{CombatStats, Player, ShipStats, Ship},
+    ships::{CombatStats, Player, Ship, ShipStats},
 };
 use crate::systems::map::Map;
 use crate::AppState;
@@ -29,7 +29,8 @@ pub fn player_input(
     map: Res<Map>,
     mut state: ResMut<State<AppState>>,
 
-    mut set: ParamSet<( //p0: player, p1: other ships
+    mut set: ParamSet<(
+        //p0: player, p1: other ships
         Query<
             (
                 Entity,
@@ -93,10 +94,10 @@ pub fn player_input(
         moved = try_move_player(1, 1, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Right) && keys.pressed(KeyCode::LControl) {
         // println!("Right Control pressed");
-        moved = try_move_player(1, -1, &map, commands, &game_time,&mut set);
+        moved = try_move_player(1, -1, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Left) && keys.pressed(KeyCode::LShift) {
         // println!("Right key pressed");
-        moved = try_move_player(-1, 1, &map, commands, &game_time,&mut set);
+        moved = try_move_player(-1, 1, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Left) && keys.pressed(KeyCode::LControl) {
         // println!("Right key pressed");
         moved = try_move_player(-1, -1, &map, commands, &game_time, &mut set);
@@ -105,13 +106,13 @@ pub fn player_input(
         moved = try_move_player(0, -1, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Up) {
         // println!("Up key pressed");
-        moved = try_move_player(0, 1, &map, commands, &game_time,&mut set);
+        moved = try_move_player(0, 1, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Left) {
         // println!("Left key pressed");
-        moved = try_move_player(-1, 0, &map, commands, &game_time,&mut set);
+        moved = try_move_player(-1, 0, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Right) {
         // println!("Right key pressed");
-        moved = try_move_player(1, 0, &map, commands, &game_time,&mut set);
+        moved = try_move_player(1, 0, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Period) {
         // println!("Pressed full stop");
         moved = PlayerAction::WaitTurn;
@@ -131,9 +132,9 @@ pub fn player_input(
     }
 
     // Used for debugging
-    if moved != PlayerAction::NoAction {
-        println!("Player took action {:?} on turn {}", moved, game_time.tick);
-    }
+    // if moved != PlayerAction::NoAction {
+    //     println!("Player took action {:?} on turn {}", moved, game_time.tick);
+    // }
 
     // println!("No player input detected");
 }
@@ -188,14 +189,20 @@ fn try_move_player(
                 commands.entity(player_entity).insert(WantsToMelee {
                     target: *potential_target,
                 });
-                println!("Player wants to melee entity {} on turn {}", potential_target.index(), game_time.tick);
+                // println!("Player wants to melee entity {} on turn {}", potential_target.index(), game_time.tick);
             } else {
-                panic!("Player tried to target entity {} but it failed!", potential_target.index());
+                panic!(
+                    "Player tried to target entity {} but it failed!",
+                    potential_target.index()
+                );
             }
             // Attack is considered to be a
             return PlayerAction::MeleeAttack;
         } else {
-            panic!("Trying to target an entity {} that is not in the destination tile", potential_target.index());
+            panic!(
+                "Trying to target an entity {} that is not in the destination tile",
+                potential_target.index()
+            );
         }
         // TODO: Add waiting time
     }
@@ -208,7 +215,7 @@ fn try_move_player(
 
         return PlayerAction::Moved;
     } else {
-        println!("Player bumped into a blocked tile");
+        // println!("Player bumped into a blocked tile");
         return PlayerAction::NoAction;
     }
 }
