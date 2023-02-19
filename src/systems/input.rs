@@ -63,8 +63,10 @@ pub fn player_input(
     , but Bevy does not seem to like triggering a system on both a state change and fixed time interval.
     */
 
+    // println!("{:?}", state);
+
     // Delay only needs to be very small, 10ms.
-    let delay: f64 = 0.00;
+    let delay: f64 = 0.001;
     let passed_time: f64 = time.elapsed_seconds_f64() - *last_time;
     // println!("Passed time: {passed_time}"); // Game will lag with print statement
     if passed_time < delay {
@@ -76,14 +78,14 @@ pub fn player_input(
     // println!("Time passed: {}", passed_time);
     *last_time = time.elapsed_seconds_f64();
 
-    // Player WaitingTime is not 0, so skip turn
+    // Player WaitingTime is not 0, so transition to IncrementTime
     if set.p0().single_mut().2.as_mut().turns > 0 {
-        // Player action succesful, end player turn.
         state.clear_schedule();
-        state.overwrite_replace(AppState::TransitionTime).unwrap();
+        state.overwrite_replace(AppState::IncrementTime).unwrap();
         return;
     }
 
+    // Game will lag with this print statement
     // println!("Awaiting player input (Turn {})", game_time.tick);
 
     // Check diagonal movements before normal movements. Alternatively, check if
@@ -131,10 +133,11 @@ pub fn player_input(
         }
     }
 
-    // Used for debugging
-    // if moved != PlayerAction::NoAction {
-    //     println!("Player took action {:?} on turn {}", moved, game_time.tick);
-    // }
+    // Player took action, skip TransitionTime and instead go to RunAI
+    if moved != PlayerAction::NoAction {
+        println!("Player took action {:?} on turn {}", moved, game_time.tick);
+        state.set(AppState::RunAI).unwrap();
+    }
 
     // println!("No player input detected");
 }
@@ -189,7 +192,11 @@ fn try_move_player(
                 commands.entity(player_entity).insert(WantsToMelee {
                     target: *potential_target,
                 });
-                // println!("Player wants to melee entity {} on turn {}", potential_target.index(), game_time.tick);
+                println!(
+                    "Player wants to melee entity {} on turn {}",
+                    potential_target.index(),
+                    game_time.tick
+                );
             } else {
                 panic!(
                     "Player tried to target entity {} but it failed!",

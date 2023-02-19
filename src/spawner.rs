@@ -164,14 +164,14 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
         .insert(Name::new(name.to_string()))
         .insert(ShipStats {
             fuel: 100,
-            speed: 2,
+            speed: 4,
             storage: 50,
             health: 3,
             armor: 2,
             shields: 4,
         })
         .insert(CombatStats {
-            melee_speed: 2,
+            melee_speed: 4,
             melee_dmg: 1,
             ranged_speed: 20,
             ranged_dmg: 1,

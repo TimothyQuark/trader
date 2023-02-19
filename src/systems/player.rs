@@ -30,14 +30,14 @@ pub fn init_player(mut commands: Commands) {
         .insert(Position { x: 0, y: 0 })
         .insert(ShipStats {
             fuel: 100,
-            speed: 1,
+            speed: 2,
             storage: 1000,
-            health: 17,
-            armor: 5,
+            health: 2,
+            armor: 0,
             shields: 13,
         })
         .insert(CombatStats {
-            melee_speed: 1,
+            melee_speed: 2,
             melee_dmg: 4,
             ranged_speed: 5,
             ranged_dmg: 1,

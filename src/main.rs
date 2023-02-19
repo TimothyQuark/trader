@@ -21,10 +21,11 @@ use systems::{
     map::init_map,
     map_indexing::map_indexing,
     melee::melee_combat_system,
-    pirate_ai::monster_ai,
+    pirate_ai::pirate_ai,
     player::init_player,
+    prerun,
     terminal::{init_terminal, render_terminal, update_sidebars, Terminal},
-    time::{transition_time, GameTime},
+    time::{increment_time, GameTime},
 };
 
 mod geometry;
@@ -37,9 +38,13 @@ pub enum AppState {
     MainMenu,
     #[default]
     NewGame,
-    InGame,
     AwaitingInput,
-    TransitionTime,
+    IncrementTime,
+    RunAI,
+    RunCombat,
+    RunDamage,
+    DeleteDead,
+    GameOver,
 }
 
 fn main() {
@@ -81,35 +86,48 @@ fn main() {
         .add_startup_system(init_map)
         .add_startup_system(init_player)
         // Render Systems
-        .add_system(render_terminal)
-        .add_system(update_sidebars)
-        .add_system(map_indexing)
+        .add_system_set(
+            SystemSet::new()
+                .label("RenderTerminal")
+                .with_system(render_terminal)
+                .with_system(update_sidebars)
+                .with_system(map_indexing),
+        )
         // Game Systems
         // TODO: On new game, clear the World
         .add_system_set(
             SystemSet::on_enter(AppState::NewGame)
-                .label("BuildMap")
+                .label("NewGame")
                 .with_system(build_new_map),
+        )
+        .add_system_set(
+            SystemSet::on_update(AppState::IncrementTime)
+                .label("IncrementTime")
+                .with_system(increment_time),
         )
         .add_system_set(
             SystemSet::on_update(AppState::AwaitingInput)
                 .label("PlayerTurn")
                 .with_system(player_input),
         )
-        // Everything to do with time should be scheduled after time has been incremented
         .add_system_set(
-            SystemSet::on_update(AppState::TransitionTime)
-                .with_system(transition_time)
-                .label("TimeSystemSet")
-                .with_system(monster_ai.after(transition_time)), // Monsters only take turn when there a turn ticks
+            SystemSet::on_update(AppState::RunAI)
+                .label("RunAI")
+                .with_system(pirate_ai),
         )
-        // Combat system set
         .add_system_set(
-            SystemSet::new()
-                .label("CombatSystemSet")
-                .after("TimeSystemSet")
-                .with_system(melee_combat_system)
-                .with_system(damage_system)
+            SystemSet::on_update(AppState::RunCombat)
+                .label("RunCombat")
+                .with_system(melee_combat_system),
+        )
+        .add_system_set(
+            SystemSet::on_update(AppState::RunDamage)
+                .label("RunDamage")
+                .with_system(damage_system),
+        )
+        .add_system_set(
+            SystemSet::on_update(AppState::DeleteDead)
+                .label("DeleteDead")
                 .with_system(delete_the_dead),
         )
         .run();

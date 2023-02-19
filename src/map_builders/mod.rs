@@ -23,6 +23,8 @@ pub fn build_new_map(
     mut state: ResMut<State<AppState>>,
     mut query: Query<&mut Position, With<Player>>,
 ) {
+    println!("Building new map!");
+
     let new_depth = 1;
 
     // let mut rng_gen = SmallRng::seed_from_u64(100);
@@ -57,8 +59,11 @@ pub fn build_new_map(
     // Spawn entities on the map
     result.spawn_entities(&mut commands);
 
-    // Change Game State to awaiting input
-    state.overwrite_replace(AppState::AwaitingInput).unwrap();
+    // Change Game State to awaiting input. Should be last thing to occur in system
+    // println!("{:?}", state);
+    state.overwrite_replace(AppState::IncrementTime).unwrap();
+    // println!("{:?}", state);
+    // state.set(AppState::AwaitingInput).unwrap();
 
     // println!("New map created and inserted as a resource");
 }

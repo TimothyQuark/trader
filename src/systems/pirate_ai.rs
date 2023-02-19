@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use pathfinding::prelude::astar;
 
 use crate::components::{
+    combat::WantsToMelee,
     common::WaitTime,
     map::Position,
     ships::{CombatStats, Pirate, Player, ShipStats},
@@ -14,7 +15,8 @@ use super::time::GameTime;
 
 /// System responsible for pirate behaviour
 /// Only runs when current State is TransitionTime
-pub fn monster_ai(
+pub fn pirate_ai(
+    mut commands: Commands,
     mut map: ResMut<Map>,
     mut state: ResMut<State<AppState>>,
     time: Res<GameTime>,
@@ -29,15 +31,17 @@ pub fn monster_ai(
             ),
             With<Pirate>,
         >,
-        Query<&Position, With<Player>>,
+        Query<(Entity, &Position), With<Player>>,
     )>,
 ) {
     // println!("Pirate AI running");
 
     // Keep the borrow checker happy, does not play well with QuerySets
     let goal: Position;
+    let player_entity: Entity;
     {
-        goal = p.p1().single().clone();
+        goal = p.p1().single().1.clone();
+        player_entity = p.p1().single().0;
         // println!("Player at position: x: {}, y: {}", goal.x, goal.y);
     }
 
@@ -86,11 +90,16 @@ pub fn monster_ai(
                     wait_time.turns += ship_stats.speed;
                 } else if path.len() == 2 {
                     // Monster next to player (path is player_pos and mon_pos, hence len == 2), use melee attack
-                    // println!(
-                    //     "The monster {} attacks the player on turn {}s",
-                    //     mon_ent.index(),
-                    //     time.tick
-                    // );
+                    println!(
+                        "The monster {} attacks the player on turn {}",
+                        mon_ent.index(),
+                        time.tick
+                    );
+
+                    commands.entity(mon_ent).insert(WantsToMelee {
+                        target: player_entity,
+                    });
+
                     wait_time.turns += combat_stats.melee_speed;
                 } else {
                     panic!(
@@ -102,4 +111,7 @@ pub fn monster_ai(
             }
         }
     }
+
+    // Pirate AI is done, so transition to next state, RunCombat
+    state.set(AppState::RunCombat).unwrap();
 }
