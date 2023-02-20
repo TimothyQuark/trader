@@ -4,7 +4,7 @@ use crate::{
     components::{
         combat::{SufferDamage, WantsToMelee},
         common::GameName,
-        ships::{CombatStats, Ship, ShipStats},
+        ships::{Ship, ShipStats},
     },
     AppState,
 };
@@ -12,12 +12,14 @@ use crate::{
 use super::{terminal::GameLog, time::GameTime};
 
 // TODO: Add With statements to ensure safety of Queries
+/// System responsible for melee combat (i.e. gatling gun fire which only reaches 1 square)\
+/// Once finished, transitions to next AppState
 pub fn melee_combat_system(
     mut commands: Commands,
     mut state: ResMut<State<AppState>>,
     mut log: ResMut<GameLog>,
     time: Res<GameTime>,
-    attack_q: Query<(Entity, &WantsToMelee, &ShipStats, &CombatStats, &GameName)>,
+    attack_q: Query<(Entity, &WantsToMelee, &ShipStats, &GameName)>,
     mut target_q: Query<(&ShipStats, Option<&mut SufferDamage>, &GameName), With<Ship>>,
 ) {
     // println!("Melee Combat running");
@@ -26,30 +28,29 @@ pub fn melee_combat_system(
     // This is kind of thematic, as if a ship shoots a gun, then the bullets will still travel
     // even if the ship gets killed
 
-    // All immutable to please the borrow checker
-    for (entity, wants_melee, ship_stats, combat_stats, a_name) in attack_q.iter() {
-        // Attacker only attacks if their health is positive. So if entity killed this turn, does not do ghost attack
+    for (entity, wants_melee, ship_stats, a_name) in attack_q.iter() {
+        // Attacker only attacks if their health is positive. This does not prevent ghost attacks, as
+        // health of entities is modified in later systems
         if ship_stats.health > 0 {
             // Get target entity's stats
-            println!(
-                "Entity {} wants to attack target {} for {} melee damage (pre mitigation)",
-                entity.index(),
-                wants_melee.target.index(),
-                combat_stats.melee_dmg
-            );
+            // println!(
+            //     "Entity {} wants to attack target {} for {} melee damage (pre mitigation)",
+            //     entity.index(),
+            //     wants_melee.target.index(),
+            //     ship_stats.melee_dmg
+            // );
             // You can only get components that are in the Query
             let target_stats = target_q
                 .get_component::<ShipStats>(wants_melee.target)
                 .unwrap();
 
-            let damage = i32::max(0, combat_stats.melee_dmg as i32 - target_stats.armor as i32);
+            let damage = i32::max(0, ship_stats.melee_dmg as i32 - target_stats.armor as i32);
             if damage == 0 {
-                // TODO: Print to game console, not terminal
-                println!(
-                    "Entity {} is unable to hurt entity {} (post mitigation)",
-                    entity.index(),
-                    wants_melee.target.index()
-                );
+                // println!(
+                //     "Entity {} is unable to hurt entity {} (post mitigation)",
+                //     entity.index(),
+                //     wants_melee.target.index()
+                // );
                 let t_name = target_q
                     .get_component::<GameName>(wants_melee.target)
                     .unwrap();
@@ -57,12 +58,12 @@ pub fn melee_combat_system(
                 log.new_log(s, time.tick);
             } else {
                 // TODO: Print to game console, not terminal
-                println!(
-                    "Entity {} will hurt entity {} for {} melee damage (post mitigation)",
-                    entity.index(),
-                    wants_melee.target.index(),
-                    damage
-                );
+                // println!(
+                //     "Entity {} will hurt entity {} for {} melee damage (post mitigation)",
+                //     entity.index(),
+                //     wants_melee.target.index(),
+                //     damage
+                // );
                 SufferDamage::new_damage(
                     &mut commands,
                     &mut target_q,

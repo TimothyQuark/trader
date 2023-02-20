@@ -26,5 +26,5 @@ pub struct Renderable {
     pub glyph: char,
     pub fg: Color,
     pub bg: Color,
-    pub render_order: i32,
+    pub render_order: i32, // Lower means higher render priority (Player Sprite has 0)
 }

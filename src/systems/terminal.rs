@@ -1,6 +1,4 @@
-use bevy::{
-    prelude::*, reflect::erased_serde::__private::serde::__private::de::IdentifierDeserializer,
-};
+use bevy::prelude::*;
 
 use super::{
     map::{wall_glyph, Map, MapTileType},
@@ -12,7 +10,7 @@ use crate::components::{
 };
 use crate::components::{
     map::Position,
-    ships::{CombatStats, Player, ShipStats},
+    ships::{Player, ShipStats},
 };
 use crate::text::char_to_cp437;
 use crate::text::{default_textstyle, DefaultTextStyle};
@@ -21,7 +19,7 @@ use crate::text::{default_textstyle, DefaultTextStyle};
 const TILE_LAYER: f32 = 0.0;
 const TEXT_LAYER: f32 = 1.0;
 
-// Resource that holds strings that are printed to the bottom of the screen
+/// Resource that holds log entries of the game, which are printed to the bottom of the screen
 #[derive(Resource, Default)]
 pub struct GameLog {
     entries: Vec<String>,
@@ -62,9 +60,12 @@ pub struct Terminal {
 impl Default for Terminal {
     /// Returns default Terminal resource.
     ///
-    /// Tile size: 20 pixels
-    /// Screen width: 1080 pixels
-    /// Screen height: 720 pixels
+    /// Tile size: 20 pixels\
+    /// Screen width: 1080 pixels\
+    /// Screen height: 720 pixels\
+    /// Top Sidebar: 1 tile
+    /// Bottom Sidebar: 11 tiles
+    /// Right Sidebar: 14 tiles
     fn default() -> Self {
         let tile_size = 20;
         let screen_width = 1080;
@@ -148,23 +149,16 @@ impl Terminal {
     pub fn idx_xy(&self, idx: u32) -> (u32, u32) {
         let x = idx % self.terminal_width;
         let y = (idx - x) / self.terminal_width;
-        // let y = idx / self.width;
-
         (x, y)
     }
 
-    /// Converts map coordinates to terminal coordinates. Note that this max return
-    /// terminal coordinates that are out of range
+    /// Converts map coordinates to terminal coordinates.\
+    /// Note that this may return terminal coordinates that are out of bounds
     ///
     /// Returns: (term_x_idx, term_y_idx)
     fn map_coord_to_term_coord(&self, map_x_idx: u32, map_y_idx: u32) -> (u32, u32) {
-        // let (map_x_idx, map_y_idx) = map.idx_xy(map_idx);
-
-        // Shift map_y_idx up so it is not covered by the game log. Nothing need to
-        // be done with map_x_idx for now.
         let term_y_idx = map_y_idx + self.bottom_sidebar_height;
         let term_x_idx = map_x_idx;
-
         (term_x_idx, term_y_idx)
     }
 }
@@ -339,13 +333,11 @@ pub fn render_terminal(
 
     // Update text of the right sidebar
     for (idx, mut line) in p.p2().single_mut().sections.iter_mut().enumerate() {
-        // line.value = "Test \n".to_string();
         line.value = terminal.right_sidebar_text[idx].clone();
     }
 
     // Update text of the bottom sidebar
     for (idx, mut line) in p.p3().single_mut().sections.iter_mut().enumerate() {
-        // line.value = "Test \n".to_string();
         line.value = terminal.bottom_sidebar_text[idx].clone();
     }
 
@@ -355,8 +347,6 @@ pub fn render_terminal(
 
         // // Shift map_y_idx up so it is not covered by the game log. Nothing need to
         // // be done with map_x_idx for now.
-        // let term_y_idx = map_y_idx + terminal.bottom_sidebar_height;
-        // let term_x_idx = map_x_idx;
         let (map_x_idx, map_y_idx) = map.idx_xy(map_idx);
         let (term_x_idx, term_y_idx) = terminal.map_coord_to_term_coord(map_x_idx, map_y_idx);
 
@@ -393,11 +383,11 @@ pub fn render_terminal(
                 }
                 MapTileType::Moon => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('o');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::BLUE;
+                    terminal.terminal_tiles[terminal_idx].1 = Color::GREEN;
                 }
                 MapTileType::Wormhole => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('!');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::RED;
+                    terminal.terminal_tiles[terminal_idx].1 = Color::FUCHSIA;
                 }
                 MapTileType::Star => {
                     terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('$');
@@ -419,7 +409,6 @@ pub fn render_terminal(
     data.sort_by(|&a, &b| b.0.render_order.cmp(&a.0.render_order));
     for (renderable, position) in data.iter() {
         // println!("Found a renderable!");
-
         let (term_x_idx, term_y_idx) =
             terminal.map_coord_to_term_coord(position.x as u32, position.y as u32);
         let terminal_idx = terminal.xy_idx(term_x_idx, term_y_idx);
@@ -428,7 +417,6 @@ pub fn render_terminal(
     }
 
     // Render the glyphs and colors of the terminal tiles
-    // let query_iter = q.q0().iter_mut();
     for tile in p.p0().iter_mut() {
         let (_, mut sprite, tile_component) = tile;
         sprite.index = terminal.terminal_tiles[tile_component.idx].0;
@@ -442,9 +430,11 @@ pub fn update_sidebars(
     mut terminal: ResMut<Terminal>,
     time: Res<GameTime>,
     mut log: ResMut<GameLog>,
-    query: Query<(&ShipStats, &CombatStats, &GameName), With<Player>>,
+    query: Query<(&ShipStats, &GameName), With<Player>>,
 ) {
-    let (ship_stats, combat_stats, name) = query.single();
+    // Player info
+    let (ship_stats, name) = query.single();
+
     // Update top sidebar
     terminal.top_sidebar_text = String::from(format!("Turn: {}", time.tick));
 
@@ -471,10 +461,10 @@ pub fn update_sidebars(
                 "Shields: {}/{}\n",
                 ship_stats.shields, ship_stats.shields
             )), // TODO: Show as fraction
-            9 => line.push_str(&format!("Gatling Firerate: {}\n", combat_stats.melee_speed)),
-            10 => line.push_str(&format!("Gatling Damage: {}\n", combat_stats.melee_dmg)),
-            11 => line.push_str(&format!("Laser Firerate: {}\n", combat_stats.ranged_speed)),
-            12 => line.push_str(&format!("Laser Damage: {}\n", combat_stats.ranged_dmg)),
+            9 => line.push_str(&format!("Gatling Firerate: {}\n", ship_stats.melee_speed)),
+            10 => line.push_str(&format!("Gatling Damage: {}\n", ship_stats.melee_dmg)),
+            11 => line.push_str(&format!("Laser Firerate: {}\n", ship_stats.ranged_speed)),
+            12 => line.push_str(&format!("Laser Damage: {}\n", ship_stats.ranged_dmg)),
             _ => {}
         }
     }

@@ -15,9 +15,8 @@ use empty_space::EmptySpaceBuilder;
 mod common;
 // use common::apply_room_to_map;
 
-// Since this system is very large, warrents its own folder
-
-/// System which generates map, populates it with entities and does other tasks.
+/// System which generates the map using a MapBuilder, and then transitions to the next AppState\
+/// Since map building is complex and important, this System has its own folder
 pub fn build_new_map(
     mut commands: Commands,
     mut state: ResMut<State<AppState>>,

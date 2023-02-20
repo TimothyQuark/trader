@@ -6,31 +6,22 @@ use crate::components::{
     combat::WantsToMelee,
     common::WaitTime,
     map::Position,
-    ships::{CombatStats, Pirate, Player, ShipStats},
+    ships::{Pirate, Player, ShipStats},
 };
 use crate::systems::map::Map;
 use crate::AppState;
 
 use super::time::GameTime;
 
-/// System responsible for pirate behaviour
-/// Only runs when current State is TransitionTime
+/// System responsible for pirate behaviour\
+/// Transitions to next AppState when finished
 pub fn pirate_ai(
     mut commands: Commands,
     mut map: ResMut<Map>,
     mut state: ResMut<State<AppState>>,
-    time: Res<GameTime>,
+    _time: Res<GameTime>,
     mut p: ParamSet<(
-        Query<
-            (
-                Entity,
-                &mut Position,
-                &mut WaitTime,
-                &ShipStats,
-                &CombatStats,
-            ),
-            With<Pirate>,
-        >,
+        Query<(Entity, &mut Position, &mut WaitTime, &ShipStats), With<Pirate>>,
         Query<(Entity, &Position), With<Player>>,
     )>,
 ) {
@@ -48,13 +39,13 @@ pub fn pirate_ai(
     let mut query = p.p0();
 
     // When not debugging, use _mon_ent instead of _ so we remember next time
-    for (mon_ent, mut mon_position, mut wait_time, ship_stats, combat_stats) in query.iter_mut() {
+    for (mon_ent, mut mon_position, mut wait_time, ship_stats) in query.iter_mut() {
         // println!(
         //     "Monster at position: x: {}, y: {}",
         //     mon_position.x, mon_position.y
         // );
 
-        // Monster only acts if it WaitTime is 0
+        // Monster only acts if its WaitTime is 0
         if wait_time.turns == 0 {
             let result = astar(
                 mon_position.as_ref(),
@@ -90,17 +81,17 @@ pub fn pirate_ai(
                     wait_time.turns += ship_stats.speed;
                 } else if path.len() == 2 {
                     // Monster next to player (path is player_pos and mon_pos, hence len == 2), use melee attack
-                    println!(
-                        "The monster {} attacks the player on turn {}",
-                        mon_ent.index(),
-                        time.tick
-                    );
+                    // println!(
+                    //     "The monster {} attacks the player on turn {}",
+                    //     mon_ent.index(),
+                    //     time.tick
+                    // );
 
                     commands.entity(mon_ent).insert(WantsToMelee {
                         target: player_entity,
                     });
 
-                    wait_time.turns += combat_stats.melee_speed;
+                    wait_time.turns += ship_stats.melee_speed;
                 } else {
                     panic!(
                         "Monster {} is on top of player.\n Player at position: x: {}, y: {}\n Monster at position: x: {}, y: {} \n

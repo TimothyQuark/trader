@@ -1,6 +1,6 @@
 // use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy::ecs::schedule::ReportExecutionOrderAmbiguities;
-use bevy::log::LogPlugin;
+// use bevy::ecs::schedule::ReportExecutionOrderAmbiguities;
+// use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
 use bevy_inspector_egui::prelude::*;
@@ -23,7 +23,6 @@ use systems::{
     melee::melee_combat_system,
     pirate_ai::pirate_ai,
     player::init_player,
-    prerun,
     terminal::{init_terminal, render_terminal, update_sidebars, GameLog, Terminal},
     time::{increment_time, GameTime},
 };

@@ -4,7 +4,7 @@ use crate::components::{
     combat::WantsToMelee,
     common::WaitTime,
     map::Position,
-    ships::{CombatStats, Player, Ship, ShipStats},
+    ships::{Player, Ship, ShipStats},
 };
 use crate::systems::map::Map;
 use crate::AppState;
@@ -31,16 +31,7 @@ pub fn player_input(
 
     mut set: ParamSet<(
         //p0: player, p1: other ships
-        Query<
-            (
-                Entity,
-                &mut Position,
-                &mut WaitTime,
-                &ShipStats,
-                &CombatStats,
-            ),
-            (With<Player>, With<Ship>),
-        >,
+        Query<(Entity, &mut Position, &mut WaitTime, &ShipStats), (With<Player>, With<Ship>)>,
         Query<&mut Position, (Without<Player>, With<Ship>)>,
     )>,
 ) {
@@ -50,8 +41,8 @@ pub fn player_input(
     // single key events, or text input for entire sentences (see https://bevy-cheatbook.github.io/input/char.html)
     // TODO: Add fast travel (space + arrow key?). Maybe not directly inside input mod.
 
-    /*
-    Once player input is detected and accepted, we switch to MonsterTurn.
+    /* (Following is not entirely relevant anymore)
+    Once player input is detected and accepted, we switch to next state.
     MonsterTurn is usually very fast and returns to AwaitingInput, which means
     player_input system seems to be triggered multiple times in a single frame update.
     That results in duplicate player inputs being detected (ex: Player moves 5 spaces when arrows
@@ -65,7 +56,8 @@ pub fn player_input(
 
     // println!("{:?}", state);
 
-    // Delay only needs to be very small, 10ms.
+    // As state transitions are so fast, it can cause to sort of hang when in this system. Hence a small time delay is added
+    // Delay only needs to be very small, 1ms.
     let delay: f64 = 0.001;
     let passed_time: f64 = time.elapsed_seconds_f64() - *last_time;
     // println!("Passed time: {passed_time}"); // Game will lag with print statement
@@ -88,6 +80,7 @@ pub fn player_input(
     // Game will lag with this print statement
     // println!("Awaiting player input (Turn {})", game_time.tick);
 
+    // TODO: Add keypad controls as well (number pad)
     // Check diagonal movements before normal movements. Alternatively, check if
     // Shift or control are NOT pressed.
     let mut moved = PlayerAction::NoAction;
@@ -126,7 +119,7 @@ pub fn player_input(
             set.p0().single_mut().2.as_mut().turns += set.p0().single_mut().3.speed;
         }
         PlayerAction::MeleeAttack => {
-            set.p0().single_mut().2.as_mut().turns += set.p0().single_mut().4.melee_speed;
+            set.p0().single_mut().2.as_mut().turns += set.p0().single_mut().3.melee_speed;
         }
         PlayerAction::WaitTurn => {
             set.p0().single_mut().2.as_mut().turns += 1;
@@ -149,18 +142,9 @@ fn try_move_player(
     delta_y: i32,
     map: &Map,
     mut commands: Commands,
-    game_time: &Res<GameTime>, // Game time in turns
+    _game_time: &Res<GameTime>, // Game time in turns
     p_set: &mut ParamSet<(
-        Query<
-            (
-                Entity,
-                &mut Position,
-                &mut WaitTime,
-                &ShipStats,
-                &CombatStats,
-            ),
-            (With<Player>, With<Ship>),
-        >,
+        Query<(Entity, &mut Position, &mut WaitTime, &ShipStats), (With<Player>, With<Ship>)>,
         Query<&mut Position, (Without<Player>, With<Ship>)>,
     )>,
 ) -> PlayerAction {
@@ -188,15 +172,15 @@ fn try_move_player(
             //     potential_target.index(),
             //     ship_stats
             // );
-            if let Ok((player_entity, _, _, _, _)) = p_set.p0().get_single() {
+            if let Ok((player_entity, _, _, _)) = p_set.p0().get_single() {
                 commands.entity(player_entity).insert(WantsToMelee {
                     target: *potential_target,
                 });
-                println!(
-                    "Player wants to melee entity {} on turn {}",
-                    potential_target.index(),
-                    game_time.tick
-                );
+                // println!(
+                //     "Player wants to melee entity {} on turn {}",
+                //     potential_target.index(),
+                //     game_time.tick
+                // );
             } else {
                 panic!(
                     "Player tried to target entity {} but it failed!",
@@ -211,12 +195,10 @@ fn try_move_player(
                 potential_target.index()
             );
         }
-        // TODO: Add waiting time
     }
 
     // Check if destination is blocked
     if !map.blocked_tiles[destination_idx] {
-        // TODO: Make this += line
         p_set.p0().single_mut().1.x += delta_x;
         p_set.p0().single_mut().1.y += delta_y;
 

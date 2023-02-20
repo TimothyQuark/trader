@@ -24,7 +24,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub blocked_tiles: Vec<bool>,
 
-    // Each tile has a vec of entities that are ontop of it
+    // Each tile has a vec of entities that are ontop of it (can stack non ship entities)
     pub tile_content: Vec<Vec<Entity>>,
 }
 
@@ -116,38 +116,37 @@ impl Map {
 /// System that initializes a default map on app start
 pub fn init_map(mut commands: Commands) {
     let map = Map::default();
-
     commands.insert_resource(map);
 }
 
-/// Check if a map tile is a planet and is revealed (useful for rendering)
-fn is_revealed_and_planet(map: &Map, x: i32, y: i32) -> bool {
+/// Check if a map tile is a wall and is revealed (useful for rendering)
+fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
     let idx = map.xy_idx(x, y);
     // println!("x: {}, y: {}, idx: {}", x, y, idx);
-    map.tiles[idx] == MapTileType::Planet && map.revealed_tiles[idx]
+    map.tiles[idx] == MapTileType::Wall && map.revealed_tiles[idx]
 }
 
 /// Determines the correct wall glyph to be used for a wall tile,
 /// based on how many neighboring wall tiles it has
 pub fn wall_glyph(map: &Map, x: i32, y: i32) -> u8 {
     // Walls on edge of map will default to basic wall, because their neighbors
-    // are out of bounds of map_tiles vec
+    // are out of bounds of map_tiles vec. That's why my map looks so boring
     if x < 1 || x > map.width as i32 - 2 || y < 1 || y > map.height as i32 - 2 {
         return 35;
     }
 
     let mut mask: u8 = 0;
 
-    if is_revealed_and_planet(map, x, y - 1) {
+    if is_revealed_and_wall(map, x, y - 1) {
         mask += 1;
     }
-    if is_revealed_and_planet(map, x, y + 1) {
+    if is_revealed_and_wall(map, x, y + 1) {
         mask += 2;
     }
-    if is_revealed_and_planet(map, x - 1, y) {
+    if is_revealed_and_wall(map, x - 1, y) {
         mask += 4;
     }
-    if is_revealed_and_planet(map, x + 1, y) {
+    if is_revealed_and_wall(map, x + 1, y) {
         mask += 8;
     }
 

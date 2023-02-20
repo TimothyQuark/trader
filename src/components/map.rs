@@ -24,6 +24,7 @@ impl Position {
     /// Neighboring Positions, used for pathfinding. Uses blocking map to remove
     /// neighbors that cannot be moved to
     /// Returns Vec(Position, move_cost: u32)
+    /// Does not check for out of bounds
     pub fn successors(&self, map: &Map) -> Vec<(Position, u32)> {
         // Parent position
         let &Position { x, y } = self;
@@ -49,6 +50,7 @@ impl Position {
     }
 
     /// All neighboring tiles filtered for a specific MapTileType
+    /// Does not check for out of bounds
     pub fn neighbors(&self, map: &Map, maptile: MapTileType) -> Vec<Position> {
         let &Position { x, y } = self;
         let list = vec![

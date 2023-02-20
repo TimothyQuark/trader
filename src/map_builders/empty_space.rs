@@ -10,6 +10,8 @@ use crate::geometry::Rect;
 use crate::spawner::spawn_room;
 use crate::systems::map::MapTileType;
 
+/// The most basic Map Builder\
+/// Creates an empty room, and populates it with points of interest
 pub struct EmptySpaceBuilder {
     map: Map,
     starting_position: Position,
@@ -50,7 +52,7 @@ impl EmptySpaceBuilder {
         // let mut rng = SmallRng::seed_from_u64(100); // Static seed
 
         // Create edge of map (explicit so player knows)
-        self.room = Rect::new(0, 0, self.map.width as i32 - 2, self.map.height as i32 - 2);
+        self.room = Rect::new(1, 1, self.map.width as i32 - 4, self.map.height as i32 - 4);
         apply_room_to_map(&mut self.map, &self.room);
 
         // Spawn star in middle of map
@@ -62,8 +64,8 @@ impl EmptySpaceBuilder {
         // Don't spawn planets within 2 units of star, looks cleaner
         let num_planets = rng.gen_range(0..=10);
         // println!("Number of planets generated: {}", num_planets);
-        // Planets must be inside of system wall (-1) and min 2 tiles away from star (3)
-        let allowed_r = (3i32..i32::min(center_x - 1, center_y - 1)).collect::<Vec<_>>();
+        // Planets must be inside of system wall (-2) and min 2 tiles away from star (3)
+        let allowed_r = (3i32..i32::min(center_x - 2, center_y - 2)).collect::<Vec<_>>();
         let radii = allowed_r.iter().choose_multiple(&mut rng, num_planets);
         for &r in radii {
             let angle: f64 = rng.gen_range(0.0..360.0);
@@ -87,8 +89,8 @@ impl EmptySpaceBuilder {
                     y: planet_y,
                 };
                 let neighbors = pos.neighbors(&self.map, MapTileType::Space);
-                let test = neighbors.iter().choose(&mut rng).unwrap();
-                let idx = self.map.xy_idx(test.x, test.y);
+                let rand_neighbor = neighbors.iter().choose(&mut rng).unwrap();
+                let idx = self.map.xy_idx(rand_neighbor.x, rand_neighbor.y);
                 self.map.tiles[idx as usize] = MapTileType::Moon;
             }
         }
@@ -121,18 +123,16 @@ impl EmptySpaceBuilder {
         }
 
         // Spawn wormhole in random location.
-        let mut wormhole_attempts = 0;
-        while wormhole_attempts <= 500 {
+        for attempt in 0..500 {
             let candidate_idx = rng.gen_range(0..self.map.total_tiles());
             if self.map.tiles[candidate_idx as usize] == MapTileType::Space {
                 self.map.tiles[candidate_idx as usize] = MapTileType::Wormhole;
-                wormhole_attempts = 500;
-            } else if wormhole_attempts == 500 {
+                break
+            } else if attempt == 500 {
                 // If for some reason we cannot find a place for wormhole, replace star
                 // Must always be possible to leave the system
                 self.map.tiles[star_idx as usize] = MapTileType::Wormhole;
             }
-            wormhole_attempts += 1;
         }
 
         // Spawn player as close to bottom left as possible

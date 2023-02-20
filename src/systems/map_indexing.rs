@@ -26,4 +26,6 @@ pub fn map_indexing(
         // Add entity to the relevant map index
         map.tile_content[idx].push(entity);
     }
+
+    // TODO: Calculate revealed tiles
 }

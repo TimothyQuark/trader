@@ -11,7 +11,7 @@ pub struct WantsToMelee {
     pub target: Entity,
 }
 
-/// Component that records how much damage an entity takes. Heals should use HealDamage instead
+/// Component that records how much damage an entity takes. Healing should use HealDamage instead
 #[derive(Component)]
 pub struct SufferDamage {
     amount: Vec<u32>, // Do not directly add to this vector, use new_damage instead
@@ -47,22 +47,6 @@ impl SufferDamage {
                 victim.index()
             )
         }
-
-        // if let Ok((_, opt)) = query.get_mut(victim) {
-        //     // Entity has already taken damage, push additional damage
-        //     println!("Entity {} is taking dmg again this turn!", victim.index());
-        //     if let Some(mut suffering) = opt {
-        //         suffering.amount.push(dmg);
-        //     }
-        //     // suffering.amount.push(dmg as i32);
-        // } else {
-
-        //     // Entity has not taken damage this turn, add new component
-        //     println!("Entity {} is taking dmg for first time", victim.index());
-        //     commands.entity(victim).insert(SufferDamage {
-        //         amount: vec![dmg],
-        //     });
-        // }
     }
 
     // Get the sum of the damage done to the entity (or heal)
@@ -71,6 +55,7 @@ impl SufferDamage {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Component)]
 pub struct HealDamage {
     amount: Vec<u32>, // Do not directly add to this vector, use new_damage instead

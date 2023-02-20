@@ -11,6 +11,10 @@ use crate::{
 
 use super::{terminal::GameLog, time::GameTime};
 
+/// System for calculating damage. Checks if an entity has
+/// any of the damage components attached to it, and then processes
+/// and removes them\
+/// Once system is done, transitions to the next state
 pub fn damage_system(
     mut commands: Commands,
     mut state: ResMut<State<AppState>>,
@@ -27,7 +31,7 @@ pub fn damage_system(
             suffer.sum_dmg()
         );
 
-        // Entity has now taken damage
+        // Entity has now taken damage, rmeove component
         commands.entity(entity).remove::<SufferDamage>();
 
         // Preemptively delete entity if it runs out of health
@@ -41,6 +45,8 @@ pub fn damage_system(
     state.set(AppState::DeleteDead).unwrap();
 }
 
+/// System that deletes entities if they have zero or subzero health.\
+/// Once completed, transitions to next state
 pub fn delete_the_dead(
     mut commands: Commands,
     mut state: ResMut<State<AppState>>,

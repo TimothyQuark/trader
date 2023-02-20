@@ -4,7 +4,7 @@ use crate::components::{
     common::{GameName, WaitTime},
     map::Position,
     rendering::Renderable,
-    ships::{CombatStats, Player, Ship, ShipStats},
+    ships::{Player, Ship, ShipStats},
 };
 
 /// Spawn the player entity
@@ -35,8 +35,6 @@ pub fn init_player(mut commands: Commands) {
             health: 2,
             armor: 5,
             shields: 13,
-        })
-        .insert(CombatStats {
             melee_speed: 2,
             melee_dmg: 4,
             ranged_speed: 5,
