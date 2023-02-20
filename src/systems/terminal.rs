@@ -22,7 +22,7 @@ use crate::text::{default_textstyle, DefaultTextStyle};
 
 const BACKGROUND_LAYER: f32 = 1.0;
 const FOREGROUND_LAYER: f32 = 2.0;
-const TEXT_LAYER: f32 = 3.0;
+pub const TEXT_LAYER: f32 = 3.0; // Use in other systems, kept here for organization
 
 /// Resource that holds log entries of the game, which are printed to the bottom of the screen
 #[derive(Resource, Default)]
@@ -475,11 +475,6 @@ pub fn render_terminal(
         }
     }
 
-    // Update the tiles that draw Renderable entities. Note that this replaces
-    // what was drawn by the map.
-    // Sort Renderable entities by their render_order. The lower the render_order,
-    // the higher the priority. Thus, Player should have priority 0.
-
     /*
     Iterate through Entities that should be drawn (have Renderable and Position components).
     This would include entities such as the player, other ships etc.
@@ -506,16 +501,6 @@ pub fn render_terminal(
             terminal.background_tiles[terminal_idx].0 = char_to_cp437(' ');
             terminal.background_tiles[terminal_idx].1 = None;
         }
-
-        // // println!("Found a renderable!");
-        // let (term_x_idx, term_y_idx) =
-        //     terminal.map_coord_to_term_coord(position.x as u32, position.y as u32);
-        // let terminal_idx = terminal.xy_idx(term_x_idx, term_y_idx);
-        // terminal.foreground_tiles[terminal_idx].0 = char_to_cp437(renderable.glyph);
-        // terminal.foreground_tiles[terminal_idx].1 = renderable.fg;
-        // if let Some(bg) = renderable.bg {
-        //     terminal.foreground_tiles[terminal_idx].2 = bg;
-        // }
     }
 
     // Check if there are any tiles that should be highlighted. Clear after rendering for a single frame
@@ -528,7 +513,6 @@ pub fn render_terminal(
 
     // All tile layers have been updated, now use their contents to update the terminal tiles
     // Render the glyphs and colors of the terminal tiles
-
     for (mut sprite, tile, fg, bg) in p.p0().iter_mut() {
         // Tile to update is foreground
         if let Some(_) = fg {
@@ -550,18 +534,6 @@ pub fn render_terminal(
             panic!("TerminalTile found that is missing an identification of its render layer");
         }
     }
-    // for tile in p.p0().iter_mut() {
-    //     let (_, mut sprite, tile_component, fg, bg) = tile;
-
-    //     if let Some(_) = fg {
-    //         sprite.index = terminal.terminal_tiles[tile_component.idx].0;
-    //         sprite.color = terminal.terminal_tiles[tile_component.idx].1;
-    //     }
-    //     if let Some(_) = bg {
-    //         sprite.index = 177;
-    //         sprite.color = terminal.terminal_tiles[tile_component.idx].2;
-    //     }
-    // }
 }
 
 /// System that updates contents of sidebars by updating text inside the Terminal resource

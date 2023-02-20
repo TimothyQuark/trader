@@ -1,5 +1,9 @@
 use bevy::prelude::*;
 
+// Component attached to the 2D camera to make it easily identifiable
+#[derive(Component)]
+pub struct MainCamera;
+
 /// Component used to identify what to draw to terminal (i.e map tiles)
 #[derive(Component)]
 pub struct TerminalTile {
@@ -36,3 +40,8 @@ pub struct Renderable {
     pub bg: Option<Color>,
     pub render_order: i32, // Lower means higher render priority (Player Sprite has 0)
 }
+
+/// Component that identifies an Entity as being the tooltip when the mouse hovers over something
+/// on the map
+#[derive(Component)]
+pub struct MouseTooltip;

@@ -5,10 +5,9 @@ use bevy::prelude::*;
 use bevy::window::WindowMode;
 use bevy_inspector_egui::prelude::*;
 // use bevy_inspector_egui::quick::ResourceInspectorPlugin;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+// use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 mod map_builders;
-use components::rendering::Renderable;
 use map_builders::build_new_map;
 
 pub mod components;
@@ -32,6 +31,7 @@ use systems::{
 mod geometry;
 mod spawner;
 mod text;
+mod utilities;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Resource, Default, InspectorOptions)]
 #[reflect(Resource, InspectorOptions)]
