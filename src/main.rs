@@ -5,9 +5,10 @@ use bevy::prelude::*;
 use bevy::window::WindowMode;
 use bevy_inspector_egui::prelude::*;
 // use bevy_inspector_egui::quick::ResourceInspectorPlugin;
-// use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 mod map_builders;
+use components::rendering::Renderable;
 use map_builders::build_new_map;
 
 pub mod components;
@@ -16,6 +17,7 @@ mod systems;
 use systems::{
     camera::init_camera,
     damage_system::{damage_system, delete_the_dead},
+    hover_tooltip::tooltip,
     // debugging::debug_states,
     input::player_input,
     map::init_map,
@@ -56,7 +58,7 @@ fn main() {
         // Starting State
         .add_state(AppState::NewGame)
         // Resources
-        .insert_resource(ClearColor(Color::BLACK)) // App bg color
+        .insert_resource(ClearColor(Color::BLACK)) // App bg color. Will see if there are problems
         .insert_resource(terminal)
         .insert_resource(GameTime { tick: 0 })
         .insert_resource(GameLog::default())
@@ -74,6 +76,7 @@ fn main() {
             ..default()
         }))
         // .add_plugin(WorldInspectorPlugin)
+        // .register_type::<Renderable>()
         // .add_plugin(ResourceInspectorPlugin::<AppState>::default()) // Debug a resource
         // .add_plugin(LogDiagnosticsPlugin::default())
         // .add_plugin(FrameTimeDiagnosticsPlugin::default())
@@ -91,7 +94,8 @@ fn main() {
                 .label("RenderTerminal")
                 .with_system(render_terminal)
                 .with_system(update_sidebars)
-                .with_system(map_indexing),
+                .with_system(map_indexing)
+                .with_system(tooltip),
         )
         // Game Systems
         // TODO: On new game, clear the World

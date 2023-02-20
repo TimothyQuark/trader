@@ -6,7 +6,10 @@ use super::{
 };
 use crate::components::{
     common::GameName,
-    rendering::{BottomSidebar, Renderable, RightSidebar, TerminalTile, TopSidebar},
+    rendering::{
+        BackgroundTile, BottomSidebar, ForegroundTile, Renderable, RightSidebar, TerminalTile,
+        TopSidebar,
+    },
 };
 use crate::components::{
     map::Position,
@@ -16,8 +19,10 @@ use crate::text::char_to_cp437;
 use crate::text::{default_textstyle, DefaultTextStyle};
 
 // Layer order for different entities. Tiles at the back, text at the front
-const TILE_LAYER: f32 = 0.0;
-const TEXT_LAYER: f32 = 1.0;
+
+const BACKGROUND_LAYER: f32 = 1.0;
+const FOREGROUND_LAYER: f32 = 2.0;
+const TEXT_LAYER: f32 = 3.0;
 
 /// Resource that holds log entries of the game, which are printed to the bottom of the screen
 #[derive(Resource, Default)]
@@ -37,13 +42,17 @@ impl GameLog {
 #[derive(Resource)]
 pub struct Terminal {
     // TODO: Tile is currently a square, change to be a rectangle
-    tile_size: u32,
+    pub tile_size: u32,
     screen_width: u32,
     screen_height: u32,
-    terminal_width: u32,
-    terminal_height: u32,
+    pub terminal_width: u32,
+    pub terminal_height: u32,
 
-    pub terminal_tiles: Vec<(usize, Color)>, // Vec<(SpriteIndex, Color)
+    // Tile layers. Each tile has ASCII code and color,
+    // and its index is used to figure out where to render it
+    // If None, then this tile is black (i.e. not rendered)
+    pub foreground_tiles: Vec<(usize, Option<Color>)>, // Vec<(SpriteIndex, Color)
+    pub background_tiles: Vec<(usize, Option<Color>)>, // Vec<(SpriteIndex, Color)
 
     // In number of tiles. Fully dimensions the terminal
     // TODO: Make private, accessible only with function. Also add calculation
@@ -84,8 +93,12 @@ impl Default for Terminal {
             screen_height,
             terminal_width,
             terminal_height,
-            terminal_tiles: vec![
-                (0, Color::BLUE);
+            foreground_tiles: vec![
+                (0, Some(Color::BLUE));
+                (screen_width / tile_size * screen_height / tile_size) as usize
+            ],
+            background_tiles: vec![
+                (0, Some(Color::PINK));
                 (screen_width / tile_size * screen_height / tile_size) as usize
             ],
             top_sidebar_height,
@@ -117,8 +130,12 @@ impl Terminal {
             screen_height,
             terminal_width,
             terminal_height,
-            terminal_tiles: vec![
-                (0, Color::BLUE);
+            foreground_tiles: vec![
+                (0, Some(Color::BLUE));
+                (screen_width / tile_size * screen_height / tile_size) as usize
+            ],
+            background_tiles: vec![
+                (0, Some(Color::PINK));
                 (screen_width / tile_size * screen_height / tile_size) as usize
             ],
             top_sidebar_text: "This is default text".to_string(),
@@ -156,7 +173,7 @@ impl Terminal {
     /// Note that this may return terminal coordinates that are out of bounds
     ///
     /// Returns: (term_x_idx, term_y_idx)
-    fn map_coord_to_term_coord(&self, map_x_idx: u32, map_y_idx: u32) -> (u32, u32) {
+    pub fn map_coord_to_term_coord(&self, map_x_idx: u32, map_y_idx: u32) -> (u32, u32) {
         let term_y_idx = map_y_idx + self.bottom_sidebar_height;
         let term_x_idx = map_x_idx;
         (term_x_idx, term_y_idx)
@@ -203,11 +220,13 @@ pub fn init_terminal(
     for y in (y_min..y_max).step_by(terminal.tile_size as usize) {
         for x in (x_min..x_max).step_by(terminal.tile_size as usize) {
             // println!("x:{}, y: {}", x, y);
+
+            // Spawn foreground glyph tiles
             commands
                 .spawn(SpriteSheetBundle {
                     transform: Transform {
                         // Translation is middle of sprite, hence iterator uses stuff like tile_size / 2.0 etc
-                        translation: Vec3::new(x as f32, y as f32, TILE_LAYER),
+                        translation: Vec3::new(x as f32, y as f32, FOREGROUND_LAYER),
                         scale: Vec3::splat(1.0),
                         ..Default::default()
                     },
@@ -220,7 +239,29 @@ pub fn init_terminal(
                     ..Default::default()
                 })
                 .insert(TerminalTile { idx })
-                .insert(Name::new("Tile"));
+                .insert(ForegroundTile)
+                .insert(Name::new("ForegroundTile"));
+
+            // Spawn background glyph tiles
+            commands
+                .spawn(SpriteSheetBundle {
+                    transform: Transform {
+                        // Translation is middle of sprite, hence iterator uses stuff like tile_size / 2.0 etc
+                        translation: Vec3::new(x as f32, y as f32, BACKGROUND_LAYER),
+                        scale: Vec3::splat(1.0),
+                        ..Default::default()
+                    },
+                    sprite: TextureAtlasSprite {
+                        color: Color::PINK,
+                        index: 10,
+                        ..Default::default()
+                    },
+                    texture_atlas: texture_atlas_handle.clone(),
+                    ..Default::default()
+                })
+                .insert(TerminalTile { idx })
+                .insert(BackgroundTile)
+                .insert(Name::new("BackgroundTile"));
 
             idx += 1;
         }
@@ -322,7 +363,13 @@ pub fn render_terminal(
     r_query: Query<(&Renderable, &Position), With<Renderable>>,
     // QuerySet limited to 4 QueryState
     mut p: ParamSet<(
-        Query<(&mut Transform, &mut TextureAtlasSprite, &TerminalTile), With<TerminalTile>>,
+        Query<(
+            // &mut Transform,
+            &mut TextureAtlasSprite,
+            &TerminalTile,
+            Option<&ForegroundTile>,
+            Option<&BackgroundTile>,
+        )>,
         Query<&mut Text, With<TopSidebar>>,
         Query<&mut Text, With<RightSidebar>>,
         Query<&mut Text, With<BottomSidebar>>,
@@ -341,12 +388,13 @@ pub fn render_terminal(
         line.value = terminal.bottom_sidebar_text[idx].clone();
     }
 
-    // Update the tiles that draw the map
+    // Update the contents of the tile layers (foreground_tiles and background_tiles) stored in the Terminal
+    // that are used to render the map. By default, the map renders background to black
     for (map_idx, map_tile) in map.tiles.clone().into_iter().enumerate() {
         // let (map_x_idx, map_y_idx) = map.idx_xy(map_idx as u32);
 
-        // // Shift map_y_idx up so it is not covered by the game log. Nothing need to
-        // // be done with map_x_idx for now.
+        // Shift map_y_idx up so it is not covered by the game log. Nothing need to
+        // be done with map_x_idx for now.
         let (map_x_idx, map_y_idx) = map.idx_xy(map_idx);
         let (term_x_idx, term_y_idx) = terminal.map_coord_to_term_coord(map_x_idx, map_y_idx);
 
@@ -359,43 +407,58 @@ pub fn render_terminal(
             // Convert map_idx to terminal_idx
             let terminal_idx = terminal.xy_idx(term_x_idx, term_y_idx);
 
-            // Determine the correct glyph to show for the tile
-            // Default map tile color is blue
+            // Determine the correct glyph and color to show for the foreground_tiles
             match map_tile {
                 // TODO: Change map tile color based on environment
                 // Wall tiles change based on their neighbors
                 MapTileType::Space => {
-                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('.');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::BLACK;
+                    terminal.foreground_tiles[terminal_idx].0 = char_to_cp437(' ');
+                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::WHITE);
+                    terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+                    terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Wall => {
-                    terminal.terminal_tiles[terminal_idx].0 =
+                    terminal.foreground_tiles[terminal_idx].0 =
                         wall_glyph(&map, map_x_idx as i32, map_y_idx as i32) as usize;
-                    terminal.terminal_tiles[terminal_idx].1 = Color::BLUE;
+                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::BLUE);
+                    terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+                    terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Placeholder => {
-                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('↓');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::GREEN;
+                    terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('↓');
+                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::GREEN);
+                    terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+                    terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Planet => {
-                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('O');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::SEA_GREEN;
+                    terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('O');
+                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::SEA_GREEN);
+                    terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+                    terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Moon => {
-                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('o');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::GREEN;
+                    terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('o');
+                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::GREEN);
+                    terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+                    terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Wormhole => {
-                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('!');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::FUCHSIA;
+                    terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('!');
+                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::FUCHSIA);
+                    terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+                    terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Star => {
-                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('$');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::YELLOW;
+                    terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('$');
+                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::YELLOW);
+                    terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+                    terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Asteroid => {
-                    terminal.terminal_tiles[terminal_idx].0 = char_to_cp437('A');
-                    terminal.terminal_tiles[terminal_idx].1 = Color::SILVER;
+                    terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('A');
+                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::SILVER);
+                    terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+                    terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
             }
         }
@@ -405,23 +468,81 @@ pub fn render_terminal(
     // what was drawn by the map.
     // Sort Renderable entities by their render_order. The lower the render_order,
     // the higher the priority. Thus, Player should have priority 0.
+
+    /*
+    Iterate through Entities that should be drawn (have Renderable and Position components).
+    This would include entities such as the player, other ships etc.
+    Sort Renderable entities by their render order. The lower the render order, the
+    higher the priority (Player has priority 0)
+     */
     let mut data = r_query.iter().collect::<Vec<_>>();
     data.sort_by(|&a, &b| b.0.render_order.cmp(&a.0.render_order));
     for (renderable, position) in data.iter() {
-        // println!("Found a renderable!");
+        // Calculate terminal coords and index
         let (term_x_idx, term_y_idx) =
             terminal.map_coord_to_term_coord(position.x as u32, position.y as u32);
         let terminal_idx = terminal.xy_idx(term_x_idx, term_y_idx);
-        terminal.terminal_tiles[terminal_idx].0 = char_to_cp437(renderable.glyph);
-        terminal.terminal_tiles[terminal_idx].1 = renderable.fg;
+
+        // Update foreground tiles. Overwrites what the map rendered
+        terminal.foreground_tiles[terminal_idx].0 = char_to_cp437(renderable.glyph);
+        terminal.foreground_tiles[terminal_idx].1 = Some(renderable.fg);
+        // If the Renderable has a background color, set bg color to it and glyph to 219 (full square)
+        // Otherwise make background transparent
+        if let Some(bg) = renderable.bg {
+            terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
+            terminal.background_tiles[terminal_idx].1 = Some(bg);
+        } else {
+            terminal.background_tiles[terminal_idx].0 = 0;
+            terminal.background_tiles[terminal_idx].1 = None;
+        }
+
+        // // println!("Found a renderable!");
+        // let (term_x_idx, term_y_idx) =
+        //     terminal.map_coord_to_term_coord(position.x as u32, position.y as u32);
+        // let terminal_idx = terminal.xy_idx(term_x_idx, term_y_idx);
+        // terminal.foreground_tiles[terminal_idx].0 = char_to_cp437(renderable.glyph);
+        // terminal.foreground_tiles[terminal_idx].1 = renderable.fg;
+        // if let Some(bg) = renderable.bg {
+        //     terminal.foreground_tiles[terminal_idx].2 = bg;
+        // }
     }
 
+    // All tile layers have been updated, now use their contents to update the terminal tiles
     // Render the glyphs and colors of the terminal tiles
-    for tile in p.p0().iter_mut() {
-        let (_, mut sprite, tile_component) = tile;
-        sprite.index = terminal.terminal_tiles[tile_component.idx].0;
-        sprite.color = terminal.terminal_tiles[tile_component.idx].1;
+
+    for (mut sprite, tile, fg, bg) in p.p0().iter_mut() {
+        // Tile to update is foreground
+        if let Some(_) = fg {
+            sprite.index = terminal.foreground_tiles[tile.idx].0;
+            sprite.color = terminal.foreground_tiles[tile.idx].1.unwrap();
+        }
+        // Tile to update is background
+        else if let Some(_) = bg {
+            sprite.index = terminal.background_tiles[tile.idx].0;
+            if let Some(color) = terminal.background_tiles[tile.idx].1 {
+                sprite.color = color;
+            } else {
+                // Do not render background, i.e. black tile
+                // Sprite index has already been set to 219 previously
+                sprite.color = Color::BLACK;
+            }
+            // println!("Rendering bg tile: index {}, color {:?}", sprite.index, sprite.color);
+        } else {
+            panic!("TerminalTile found that is missing an identification of its render layer");
+        }
     }
+    // for tile in p.p0().iter_mut() {
+    //     let (_, mut sprite, tile_component, fg, bg) = tile;
+
+    //     if let Some(_) = fg {
+    //         sprite.index = terminal.terminal_tiles[tile_component.idx].0;
+    //         sprite.color = terminal.terminal_tiles[tile_component.idx].1;
+    //     }
+    //     if let Some(_) = bg {
+    //         sprite.index = 177;
+    //         sprite.color = terminal.terminal_tiles[tile_component.idx].2;
+    //     }
+    // }
 }
 
 /// System that updates contents of sidebars by updating text inside the Terminal resource

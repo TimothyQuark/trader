@@ -3,8 +3,14 @@ use bevy::prelude::*;
 /// Component used to identify what to draw to terminal (i.e map tiles)
 #[derive(Component)]
 pub struct TerminalTile {
-    pub idx: usize,
+    pub idx: usize, // Index of the tile (used to place it correctly on the screen)
 }
+
+#[derive(Component)]
+pub struct ForegroundTile;
+
+#[derive(Component)]
+pub struct BackgroundTile;
 
 // struct LeftSidebarText;
 
@@ -21,10 +27,12 @@ pub struct BottomSidebar;
 pub struct TopSidebar;
 
 /// Component that identifies entities that should be rendered to the terminal
-#[derive(Component)]
+/// Not all Renderables have a background color (ex: Player)
+#[derive(Component, Reflect)]
+
 pub struct Renderable {
     pub glyph: char,
     pub fg: Color,
-    pub bg: Color,
+    pub bg: Option<Color>,
     pub render_order: i32, // Lower means higher render priority (Player Sprite has 0)
 }

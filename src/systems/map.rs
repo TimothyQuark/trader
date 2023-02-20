@@ -3,7 +3,7 @@ use bevy::prelude::*;
 // use crate::text::char_to_cp437;
 
 /// Component that describes the kind of tile on a Map
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum MapTileType {
     Placeholder, // Should never be rendered unless there are problems
     Wall,        // Defines edge of map. Blocker

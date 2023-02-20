@@ -127,7 +127,7 @@ impl EmptySpaceBuilder {
             let candidate_idx = rng.gen_range(0..self.map.total_tiles());
             if self.map.tiles[candidate_idx as usize] == MapTileType::Space {
                 self.map.tiles[candidate_idx as usize] = MapTileType::Wormhole;
-                break
+                break;
             } else if attempt == 500 {
                 // If for some reason we cannot find a place for wormhole, replace star
                 // Must always be possible to leave the system

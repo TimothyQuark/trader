@@ -24,7 +24,7 @@ pub fn init_player(mut commands: Commands) {
         .insert(Renderable {
             glyph: '@',
             fg: Color::WHITE,
-            bg: Color::BLACK,
+            bg: None,
             render_order: 0,
         })
         .insert(Position { x: 0, y: 0 })

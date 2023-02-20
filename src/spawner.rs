@@ -150,7 +150,7 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
         .insert(Renderable {
             glyph,
             fg: Color::RED,
-            bg: Color::BLACK,
+            bg: None,
             render_order: 2,
         })
         .insert(Pirate)

@@ -28,7 +28,6 @@ pub struct ShipStats {
     pub melee_dmg: u32,
     pub ranged_speed: u64, // Ranged weapon speed, lower is better. Corresponds to turns in WaitingTime / GameTime ticks
     pub ranged_dmg: u32,
-
     // TODO: Modifiers
     /*
     speed_modifier

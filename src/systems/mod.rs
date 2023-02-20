@@ -21,3 +21,5 @@ pub mod pirate_ai;
 pub mod melee;
 
 pub mod damage_system;
+
+pub mod hover_tooltip;
