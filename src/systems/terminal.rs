@@ -54,6 +54,10 @@ pub struct Terminal {
     pub foreground_tiles: Vec<(usize, Option<Color>)>, // Vec<(SpriteIndex, Color)
     pub background_tiles: Vec<(usize, Option<Color>)>, // Vec<(SpriteIndex, Color)
 
+    // External systems can tell the Terminal to highlight tiles the next frame
+    // Note this can be used to highlight tiles outside the map
+    highlight_tiles: Vec<(usize, Color)>, // (terminal_idx, Color)
+
     // In number of tiles. Fully dimensions the terminal
     // TODO: Make private, accessible only with function. Also add calculation
     // for right_sidebar_width, not attribute but still useful.
@@ -112,6 +116,7 @@ impl Default for Terminal {
                 (terminal_height - bottom_sidebar_height - top_sidebar_height)
                     as usize
             ],
+            highlight_tiles: vec![],
         }
     }
 }
@@ -177,6 +182,12 @@ impl Terminal {
         let term_y_idx = map_y_idx + self.bottom_sidebar_height;
         let term_x_idx = map_x_idx;
         (term_x_idx, term_y_idx)
+    }
+
+    /// Tell the Terminal to highlight terminal tiles in next frame\
+    /// Arguments: Slice[terminal_idx, Color]
+    pub fn highlight_tiles(&mut self, tiles: &[(usize, Color)]) {
+        self.highlight_tiles.extend(tiles);
     }
 }
 
@@ -487,12 +498,12 @@ pub fn render_terminal(
         terminal.foreground_tiles[terminal_idx].0 = char_to_cp437(renderable.glyph);
         terminal.foreground_tiles[terminal_idx].1 = Some(renderable.fg);
         // If the Renderable has a background color, set bg color to it and glyph to 219 (full square)
-        // Otherwise make background transparent
+        // Otherwise make background transparent (set to empty space)
         if let Some(bg) = renderable.bg {
             terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
             terminal.background_tiles[terminal_idx].1 = Some(bg);
         } else {
-            terminal.background_tiles[terminal_idx].0 = 0;
+            terminal.background_tiles[terminal_idx].0 = char_to_cp437(' ');
             terminal.background_tiles[terminal_idx].1 = None;
         }
 
@@ -506,6 +517,14 @@ pub fn render_terminal(
         //     terminal.foreground_tiles[terminal_idx].2 = bg;
         // }
     }
+
+    // Check if there are any tiles that should be highlighted. Clear after rendering for a single frame
+    let highlighted_tiles = terminal.highlight_tiles.clone();
+    for (idx, color) in highlighted_tiles {
+        terminal.background_tiles[idx].0 = char_to_cp437('█');
+        terminal.background_tiles[idx].1 = Some(color);
+    }
+    terminal.highlight_tiles.clear();
 
     // All tile layers have been updated, now use their contents to update the terminal tiles
     // Render the glyphs and colors of the terminal tiles
