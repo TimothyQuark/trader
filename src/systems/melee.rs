@@ -3,17 +3,22 @@ use bevy::prelude::*;
 use crate::{
     components::{
         combat::{SufferDamage, WantsToMelee},
+        common::GameName,
         ships::{CombatStats, Ship, ShipStats},
     },
     AppState,
 };
 
+use super::{terminal::GameLog, time::GameTime};
+
 // TODO: Add With statements to ensure safety of Queries
 pub fn melee_combat_system(
     mut commands: Commands,
     mut state: ResMut<State<AppState>>,
-    attack_q: Query<(Entity, &WantsToMelee, &ShipStats, &CombatStats)>,
-    mut target_q: Query<(&ShipStats, Option<&mut SufferDamage>), With<Ship>>,
+    mut log: ResMut<GameLog>,
+    time: Res<GameTime>,
+    attack_q: Query<(Entity, &WantsToMelee, &ShipStats, &CombatStats, &GameName)>,
+    mut target_q: Query<(&ShipStats, Option<&mut SufferDamage>, &GameName), With<Ship>>,
 ) {
     // println!("Melee Combat running");
 
@@ -22,7 +27,7 @@ pub fn melee_combat_system(
     // even if the ship gets killed
 
     // All immutable to please the borrow checker
-    for (entity, wants_melee, ship_stats, combat_stats) in attack_q.iter() {
+    for (entity, wants_melee, ship_stats, combat_stats, a_name) in attack_q.iter() {
         // Attacker only attacks if their health is positive. So if entity killed this turn, does not do ghost attack
         if ship_stats.health > 0 {
             // Get target entity's stats
@@ -45,6 +50,11 @@ pub fn melee_combat_system(
                     entity.index(),
                     wants_melee.target.index()
                 );
+                let t_name = target_q
+                    .get_component::<GameName>(wants_melee.target)
+                    .unwrap();
+                let s = format!("The {} is unable to damage {}", a_name.name, t_name.name);
+                log.new_log(s, time.tick);
             } else {
                 // TODO: Print to game console, not terminal
                 println!(
@@ -59,6 +69,14 @@ pub fn melee_combat_system(
                     wants_melee.target,
                     damage as u32,
                 );
+                let t_name = target_q
+                    .get_component::<GameName>(wants_melee.target)
+                    .unwrap();
+                let s = format!(
+                    "The {} shoots {} for {} damage",
+                    a_name.name, t_name.name, damage
+                );
+                log.new_log(s, time.tick);
             }
         }
 

@@ -3,10 +3,13 @@ use bevy::prelude::*;
 use crate::{
     components::{
         combat::SufferDamage,
+        common::GameName,
         ships::{Player, ShipStats},
     },
     AppState,
 };
+
+use super::{terminal::GameLog, time::GameTime};
 
 pub fn damage_system(
     mut commands: Commands,
@@ -41,11 +44,13 @@ pub fn damage_system(
 pub fn delete_the_dead(
     mut commands: Commands,
     mut state: ResMut<State<AppState>>,
-    query: Query<(Entity, &ShipStats, Option<&Player>)>,
+    mut log: ResMut<GameLog>,
+    time: Res<GameTime>,
+    query: Query<(Entity, &ShipStats, Option<&Player>, &GameName)>,
 ) {
     // println!("Deleting the Dead!");
 
-    for (entity, ship_stats, player) in query.iter() {
+    for (entity, ship_stats, player, name) in query.iter() {
         if let Some(_) = player {
             if ship_stats.health < 1 {
                 println!("The player has died! Game over");
@@ -55,6 +60,8 @@ pub fn delete_the_dead(
         } else if ship_stats.health < 1 {
             println!("Deleting entity {} with subzero health", entity.index());
             commands.entity(entity).despawn();
+            let s = format!("The {} has died", name.name);
+            log.new_log(s, time.tick);
         }
     }
 

@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use super::ships::{Ship, ShipStats};
+use super::{
+    common::GameName,
+    ships::{Ship, ShipStats},
+};
 
 /// Component that identifies if an entity wants to attack another entity
 #[derive(Component)]
@@ -17,14 +20,14 @@ pub struct SufferDamage {
 impl SufferDamage {
     pub fn new_damage(
         commands: &mut Commands,
-        query: &mut Query<(&ShipStats, Option<&mut SufferDamage>), With<Ship>>,
+        query: &mut Query<(&ShipStats, Option<&mut SufferDamage>, &GameName), With<Ship>>,
         victim: Entity,
         dmg: u32,
     ) {
         // println!("Entity {} is taking damage!", victim.index());
 
         // Check for entity, panic if not found
-        if let Ok((_, opt)) = query.get_mut(victim) {
+        if let Ok((_, opt, _)) = query.get_mut(victim) {
             // Check if entity has SufferDamage component
             if let Some(mut suffering) = opt {
                 // println!("Entity {} is taking dmg again this turn!", victim.index());

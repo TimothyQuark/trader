@@ -33,7 +33,7 @@ pub fn init_player(mut commands: Commands) {
             speed: 2,
             storage: 1000,
             health: 2,
-            armor: 0,
+            armor: 5,
             shields: 13,
         })
         .insert(CombatStats {

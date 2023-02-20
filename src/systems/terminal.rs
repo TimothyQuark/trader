@@ -21,6 +21,19 @@ use crate::text::{default_textstyle, DefaultTextStyle};
 const TILE_LAYER: f32 = 0.0;
 const TEXT_LAYER: f32 = 1.0;
 
+// Resource that holds strings that are printed to the bottom of the screen
+#[derive(Resource, Default)]
+pub struct GameLog {
+    entries: Vec<String>,
+}
+
+impl GameLog {
+    pub fn new_log(&mut self, entry: String, time: u64) {
+        let s = format!("Turn {time}:  {entry}");
+        self.entries.push(s);
+    }
+}
+
 /// Terminal resource, contains all important information about the
 /// Game Window, such as screen dimensions, screen tile dimensions etc.
 #[derive(Resource)]
@@ -79,7 +92,7 @@ impl Default for Terminal {
             right_sidebar_width,
 
             top_sidebar_text: "This is default text".to_string(),
-            bottom_sidebar_text: vec!["Bottom sidebar text (From Terminal) \n".to_string(); 11],
+            bottom_sidebar_text: vec!["\n".to_string(); bottom_sidebar_height as usize],
             right_sidebar_text: vec![
                 "Right sidebar text (From Terminal)\n".to_string();
                 (terminal_height - bottom_sidebar_height - top_sidebar_height)
@@ -322,8 +335,6 @@ pub fn render_terminal(
     )>,
 ) {
     // Update text of the top sidebar
-    // let mut top_sidebar = q.q1().single_mut();
-    // top_sidebar.sections[0].value = terminal.top_sidebar_text.clone();
     p.p1().single_mut().sections[0].value = terminal.top_sidebar_text.clone();
 
     // Update text of the right sidebar
@@ -430,6 +441,7 @@ pub fn render_terminal(
 pub fn update_sidebars(
     mut terminal: ResMut<Terminal>,
     time: Res<GameTime>,
+    mut log: ResMut<GameLog>,
     query: Query<(&ShipStats, &CombatStats, &GameName), With<Player>>,
 ) {
     let (ship_stats, combat_stats, name) = query.single();
@@ -465,5 +477,25 @@ pub fn update_sidebars(
             12 => line.push_str(&format!("Laser Damage: {}\n", combat_stats.ranged_dmg)),
             _ => {}
         }
+    }
+
+    // Update bottom sidebar using GameLog
+    // let last = (terminal.bottom_sidebar_height - 1) as usize;
+    // TODO: Make log start from top of sidebar. Probably need to switch out the loops, iterate
+    // over terminal.bottom_sidebar_text instead of log.entries
+
+    // Hacky way to populate game log first time
+    if log.entries.len() == 0 {
+        log.new_log(String::from("Welcome to Space Trader"), time.tick);
+        log.new_log(
+            String::from("You can find more info in the README on Github"),
+            time.tick,
+        );
+    }
+    'outer: for (idx, s) in log.entries.iter().rev().enumerate() {
+        if idx >= terminal.bottom_sidebar_height as usize {
+            break 'outer;
+        }
+        terminal.bottom_sidebar_text[idx] = s.to_string() + "\n";
     }
 }

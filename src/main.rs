@@ -24,7 +24,7 @@ use systems::{
     pirate_ai::pirate_ai,
     player::init_player,
     prerun,
-    terminal::{init_terminal, render_terminal, update_sidebars, Terminal},
+    terminal::{init_terminal, render_terminal, update_sidebars, GameLog, Terminal},
     time::{increment_time, GameTime},
 };
 
@@ -60,6 +60,7 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK)) // App bg color
         .insert_resource(terminal)
         .insert_resource(GameTime { tick: 0 })
+        .insert_resource(GameLog::default())
         // .register_type::<AppState>() // use for ResourceInspectorPlugin
         // Plugins & Debuggers
         .add_plugins(DefaultPlugins.set(WindowPlugin {
