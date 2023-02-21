@@ -78,6 +78,7 @@ fn room_table(_map_depth: i32) -> RandomTable {
     RandomTable::new()
         .add("Small Pirate", 10)
         .add("Big Pirate", 2)
+        .add("Debris", 100)
     // .add("Goblin", 10)
     // // .add("Orc", 1 + map_depth)
     // .add("Orc", 10)
@@ -110,6 +111,7 @@ pub fn spawn_region(commands: &mut Commands, area: &[usize], map: &Map, map_dept
         return;
     }
 
+    // Spawn ships
     for _ in 0..num_spawns {
         let array_index = if areas.len() == 1 {
             0usize
@@ -134,6 +136,7 @@ fn spawn_entity(commands: &mut Commands, spawn: &(&usize, &String), map: &Map) {
     match spawn.1.as_ref() {
         "Small Pirate" => small_pirate(commands, x, y),
         "Big Pirate" => big_pirate(commands, x, y),
+        "Debris" => debris(commands, x, y),
         "None" => {}
         _ => {
             panic!("Attempting to spawn unknown entity: {}", spawn.1);
@@ -177,11 +180,30 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
 }
 
 fn small_pirate(commands: &mut Commands, x: i32, y: i32) {
+    // TODO: Give pirates small random values to their stats, i.e. change function arguments of pirate
+    // to accept range of values
     pirate(commands, x, y, 'p', "Small Pirate");
 }
 
 fn big_pirate(commands: &mut Commands, x: i32, y: i32) {
     pirate(commands, x, y, 'P', "Small Pirate");
+}
+
+fn debris(commands: &mut Commands, x: i32, y: i32) {
+    commands
+        .spawn_empty()
+        .insert(Position { x, y })
+        .insert(Renderable {
+            glyph: 'º',
+            fg: Color::GOLD,
+            bg: None,
+            render_order: 3,
+        })
+        .insert(GameName {
+            name: "Debris".to_string(),
+            l_name: Some("Ship Debris".to_string()),
+        })
+        .insert(Name::new("Debris".to_string()));
 }
 
 // fn health_potion(commands: &mut Commands, x: i32, y: i32) {

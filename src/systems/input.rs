@@ -190,10 +190,11 @@ fn try_move_player(
             // Attack is considered to be a
             return PlayerAction::MeleeAttack;
         } else {
-            panic!(
-                "Trying to target an entity {} that is not in the destination tile",
-                potential_target.index()
-            );
+            // The target is not a ship, there are different interactions for this
+            // panic!(
+            //     "Trying to target an entity {} that is not in the destination tile",
+            //     potential_target.index()
+            // );
         }
     }
 
