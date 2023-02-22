@@ -2,9 +2,9 @@ use bevy::prelude::*;
 
 use crate::components::{
     combat::WantsToMelee,
-    common::WaitTime,
     map::Position,
     ships::{Player, Ship, ShipStats},
+    timers::WaitTimer,
 };
 use crate::systems::map::Map;
 use crate::AppState;
@@ -31,7 +31,7 @@ pub fn player_input(
 
     mut set: ParamSet<(
         //p0: player, p1: other ships
-        Query<(Entity, &mut Position, &mut WaitTime, &ShipStats), (With<Player>, With<Ship>)>,
+        Query<(Entity, &mut Position, &mut WaitTimer, &ShipStats), (With<Player>, With<Ship>)>,
         Query<&mut Position, (Without<Player>, With<Ship>)>,
     )>,
 ) {
@@ -70,12 +70,18 @@ pub fn player_input(
     // println!("Time passed: {}", passed_time);
     *last_time = time.elapsed_seconds_f64();
 
-    // Player WaitingTime is not 0, so transition to IncrementTime
+    // No longer needed as IncrementTime skips player systems if WaitTime is not 0.
+    // Instead, panic if this is not true
     if set.p0().single_mut().2.as_mut().turns > 0 {
-        state.clear_schedule();
-        state.overwrite_replace(AppState::IncrementTime).unwrap();
-        return;
+        panic!("Player's WaitTime is not 0, but we are taking a player turn!");
     }
+    // // Player WaitingTime is not 0, so transition to IncrementTime
+    // if set.p0().single_mut().2.as_mut().turns > 0 {
+    //     // state.clear_schedule();
+    //     // state.overwrite_replace(AppState::IncrementTime).unwrap();
+    //     state.set(AppState::RunAI).unwrap();
+    //     return;
+    // }
 
     // Game will lag with this print statement
     // println!("Awaiting player input (Turn {})", game_time.tick);
@@ -144,7 +150,7 @@ fn try_move_player(
     mut commands: Commands,
     _game_time: &Res<GameTime>, // Game time in turns
     p_set: &mut ParamSet<(
-        Query<(Entity, &mut Position, &mut WaitTime, &ShipStats), (With<Player>, With<Ship>)>,
+        Query<(Entity, &mut Position, &mut WaitTimer, &ShipStats), (With<Player>, With<Ship>)>,
         Query<&mut Position, (Without<Player>, With<Ship>)>,
     )>,
 ) -> PlayerAction {

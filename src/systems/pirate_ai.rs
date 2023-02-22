@@ -4,9 +4,9 @@ use pathfinding::prelude::astar;
 
 use crate::components::{
     combat::WantsToMelee,
-    common::WaitTime,
     map::Position,
     ships::{Pirate, Player, ShipStats},
+    timers::WaitTimer,
 };
 use crate::systems::map::Map;
 use crate::AppState;
@@ -21,7 +21,7 @@ pub fn pirate_ai(
     mut state: ResMut<State<AppState>>,
     _time: Res<GameTime>,
     mut p: ParamSet<(
-        Query<(Entity, &mut Position, &mut WaitTime, &ShipStats), With<Pirate>>,
+        Query<(Entity, &mut Position, &mut WaitTimer, &ShipStats), With<Pirate>>,
         Query<(Entity, &Position), With<Player>>,
     )>,
 ) {

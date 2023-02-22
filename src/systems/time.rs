@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{common::WaitTime, ships::Player},
+    components::{ships::Player, timers::WaitTimer},
     AppState,
 };
 
@@ -14,7 +14,7 @@ pub struct GameTime {
 /// System that ticks down WaitingTime for all entities. If Player has WaitingTime = 0, then change
 /// game state to AwaitingInput
 pub fn increment_time(
-    mut query: Query<(&mut WaitTime, Option<&Player>)>,
+    mut query: Query<(&mut WaitTimer, Option<&Player>)>,
     mut state: ResMut<State<AppState>>,
     mut time: ResMut<GameTime>,
 ) {
@@ -37,7 +37,6 @@ pub fn increment_time(
             t.0.turns -= 1;
         }
 
-        //
         if let Some(_) = t.1 {
             if t.0.turns == 0 {
                 // Player can take action, transition to AwaitingInput state

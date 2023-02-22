@@ -129,8 +129,15 @@ fn show_entity_info(
     let mut lines = vec![name.clone()];
 
     if let Ok(ship_stats) = query.get_component::<ShipStats>(entity) {
-        lines.push(format!("HP: {}", ship_stats.health));
-        lines.push(format!("SH: {}", ship_stats.shields));
+        lines.push(format!(
+            "HP: {}/{}",
+            ship_stats.curr_health, ship_stats.max_health
+        ));
+        lines.push(format!(
+            "SH: {}/{}",
+            ship_stats.curr_shields, ship_stats.max_shields
+        ));
+        lines.push(format!("SPD: {}", ship_stats.speed));
     }
 
     if let Ok(_) = query.get_component::<Player>(entity) {

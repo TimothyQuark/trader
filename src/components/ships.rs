@@ -21,9 +21,13 @@ pub struct ShipStats {
     pub storage: u32,
 
     // Combat Stats
-    pub health: i32, // Health can be negative, means entity is dead and should be removed
-    pub armor: u32,  // Flat reduction of melee attacks
-    pub shields: u32, // Absorbs ranged attacks, recharges over time
+    pub curr_health: i32, // Health can be negative, means entity is dead and should be removed
+    pub max_health: i32,
+    pub health_regen: u64, // Number of turns to regenerate one unit of health
+    pub curr_shields: i32, // Absorbs ranged attacks, recharges over time
+    pub max_shields: i32,
+    pub shield_regen: u64, // Number of turns to regenerate one unit of shield
+    pub armor: u32,        // Flat reduction of melee attacks
     pub melee_speed: u64, // Melee weapon speed, lower is better. Corresponds to turns in WaitingTime / GameTime ticks
     pub melee_dmg: u32,
     pub ranged_speed: u64, // Ranged weapon speed, lower is better. Corresponds to turns in WaitingTime / GameTime ticks

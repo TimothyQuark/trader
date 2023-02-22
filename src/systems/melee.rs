@@ -31,7 +31,7 @@ pub fn melee_combat_system(
     for (entity, wants_melee, ship_stats, a_name) in attack_q.iter() {
         // Attacker only attacks if their health is positive. This does not prevent ghost attacks, as
         // health of entities is modified in later systems
-        if ship_stats.health > 0 {
+        if ship_stats.curr_health > 0 {
             // Get target entity's stats
             // println!(
             //     "Entity {} wants to attack target {} for {} melee damage (pre mitigation)",

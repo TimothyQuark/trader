@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
 use crate::components::{
-    common::{GameName, WaitTime},
+    common::GameName,
     map::Position,
     rendering::Renderable,
     ships::{Player, Ship, ShipStats},
+    timers::{HealthTimer, WaitTimer},
 };
 
 /// Spawn the player entity
@@ -20,7 +21,7 @@ pub fn init_player(mut commands: Commands) {
             name: String::from("Enterprise"),
             l_name: None,
         })
-        .insert(WaitTime { turns: 0 })
+        .insert(WaitTimer { turns: 0 })
         .insert(Renderable {
             glyph: '@',
             fg: Color::WHITE,
@@ -32,13 +33,18 @@ pub fn init_player(mut commands: Commands) {
             fuel: 100,
             speed: 2,
             storage: 1000,
-            health: 2,
-            armor: 5,
-            shields: 13,
+            max_health: 10,
+            curr_health: 10,
+            health_regen: 10,
+            armor: 0,
+            max_shields: 5,
+            curr_shields: 5,
+            shield_regen: 1,
             melee_speed: 2,
             melee_dmg: 4,
             ranged_speed: 5,
             ranged_dmg: 1,
         })
+        .insert(HealthTimer { turns: 0 })
         .id();
 }

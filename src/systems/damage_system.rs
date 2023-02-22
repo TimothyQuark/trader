@@ -23,7 +23,7 @@ pub fn damage_system(
     // println!("Damage System running!");
 
     for (entity, mut ship_stats, suffer) in query.iter_mut() {
-        ship_stats.health -= suffer.sum_dmg() as i32;
+        ship_stats.curr_health -= suffer.sum_dmg() as i32;
 
         println!(
             "Entity {} has taken {} damage",
@@ -54,16 +54,22 @@ pub fn delete_the_dead(
     time: Res<GameTime>,
     query: Query<(Entity, &ShipStats, Option<&Player>, &GameName)>,
 ) {
+    // TODO: A better method is to instead have a component IsDead, that is added to an Entity if a system determines they are dead
+    // Other systems will check if this Option exists, and if it does, then the system skips them.
+    // When a turn is done, this system will then despawn all dead entities
+
     // println!("Deleting the Dead!");
 
     for (entity, ship_stats, player, name) in query.iter() {
         if let Some(_) = player {
-            if ship_stats.health < 1 {
+            if ship_stats.curr_health < 1 {
                 println!("The player has died! Game over");
+                let s = format!("You have died! Game Over");
+                log.new_log(s, time.tick);
                 state.set(AppState::GameOver).unwrap();
                 return;
             }
-        } else if ship_stats.health < 1 {
+        } else if ship_stats.curr_health < 1 {
             println!("Deleting entity {} with subzero health", entity.index());
             commands.entity(entity).despawn();
             let s = format!("The {} has died", name.name);
@@ -72,5 +78,5 @@ pub fn delete_the_dead(
     }
 
     // Transition to next state, IncrementTime
-    state.set(AppState::IncrementTime).unwrap();
+    state.set(AppState::RunTimers).unwrap();
 }

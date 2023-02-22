@@ -24,6 +24,7 @@ use systems::{
     melee::melee_combat_system,
     pirate_ai::pirate_ai,
     player::init_player,
+    regen::regen_health,
     terminal::{init_terminal, render_terminal, update_sidebars, GameLog, Terminal},
     time::{increment_time, GameTime},
 };
@@ -45,6 +46,7 @@ pub enum AppState {
     RunCombat,
     RunDamage,
     DeleteDead,
+    RunTimers,
     GameOver,
 }
 
@@ -133,6 +135,11 @@ fn main() {
             SystemSet::on_update(AppState::DeleteDead)
                 .label("DeleteDead")
                 .with_system(delete_the_dead),
+        )
+        .add_system_set(
+            SystemSet::on_update(AppState::RunTimers)
+                .label("RunTimers")
+                .with_system(regen_health),
         )
         .run();
 }

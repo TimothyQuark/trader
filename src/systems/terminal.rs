@@ -559,7 +559,7 @@ pub fn update_sidebars(
             1 => *line += "\n",
             2 => line.push_str(&format!(
                 "Health: {}/{}\n",
-                ship_stats.health, ship_stats.health
+                ship_stats.curr_health, ship_stats.max_health
             )),
             3 => line.push_str(&format!("Fuel: {}\n", ship_stats.fuel)),
             4 => line.push_str(&format!("Flying Speed: {}\n", ship_stats.speed)),
@@ -571,7 +571,7 @@ pub fn update_sidebars(
             7 => line.push_str(&format!("Armor: {}\n", ship_stats.armor)),
             8 => line.push_str(&format!(
                 "Shields: {}/{}\n",
-                ship_stats.shields, ship_stats.shields
+                ship_stats.curr_shields, ship_stats.curr_shields
             )), // TODO: Show as fraction
             9 => line.push_str(&format!("Gatling Firerate: {}\n", ship_stats.melee_speed)),
             10 => line.push_str(&format!("Gatling Damage: {}\n", ship_stats.melee_dmg)),

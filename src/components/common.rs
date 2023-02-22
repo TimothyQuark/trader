@@ -10,9 +10,3 @@ pub struct GameName {
     /// Long name
     pub l_name: Option<String>,
 }
-
-/// Component that stores how many turns until entity can take a new action
-#[derive(Component)]
-pub struct WaitTime {
-    pub turns: u64,
-}

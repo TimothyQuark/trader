@@ -5,8 +5,8 @@ use bevy::prelude::{Color, Commands, Name};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
-use crate::components::common::WaitTime;
 use crate::components::ships::ShipStats;
+use crate::components::timers::WaitTimer;
 use crate::components::{
     common::GameName,
     map::{BlockTile, Position},
@@ -78,7 +78,7 @@ fn room_table(_map_depth: i32) -> RandomTable {
     RandomTable::new()
         .add("Small Pirate", 10)
         .add("Big Pirate", 2)
-        .add("Debris", 100)
+        .add("Debris", 1)
     // .add("Goblin", 10)
     // // .add("Orc", 1 + map_depth)
     // .add("Orc", 10)
@@ -163,15 +163,19 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
             l_name: None,
         })
         .insert(BlockTile {})
-        .insert(WaitTime { turns: 0 })
+        .insert(WaitTimer { turns: 0 })
         .insert(Name::new(name.to_string()))
         .insert(ShipStats {
             fuel: 100,
-            speed: 4,
+            speed: 2,
             storage: 50,
-            health: 3,
+            max_health: 3,
+            curr_health: 3,
+            health_regen: 0,
             armor: 2,
-            shields: 4,
+            max_shields: 4,
+            curr_shields: 4,
+            shield_regen: 0,
             melee_speed: 4,
             melee_dmg: 1,
             ranged_speed: 20,
