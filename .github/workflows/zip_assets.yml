@@ -12,15 +12,15 @@ jobs:
     name: Zip and upload Trader assets folder
     runs-on: ubuntu-latest
     steps:
-      - name: Zip assets folder
-        uses: actions/checkout@v3
-        uses: thedoctor0/zip-release@0.7.1
-        with:
-          type: 'zip'
-          filename: 'assets.zip'
-          path: '/assets'
-      - name: Upload assets ZIP file
-        uses: ncipollo/release-action@v1.12.0
-        with:
-          artifacts: "release.zip"
-          token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Zip assets folder
+      uses: actions/checkout@v3
+      uses: thedoctor0/zip-release@0.7.1
+      with:
+        type: 'zip'
+        filename: 'assets.zip'
+        path: '/assets'
+    - name: Upload assets ZIP file
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        artifacts: "release.zip"
+        token: ${{ secrets.GITHUB_TOKEN }}
