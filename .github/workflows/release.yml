@@ -6,7 +6,7 @@ name: Release
 
 on:
   push:
-    branches: [ master, v** ]
+    branches: [ master, v**]
 
 env:
   CARGO_TERM_COLOR: always
@@ -75,9 +75,4 @@ jobs:
         body: "Trader releases for Windows, Linux and MacOS.
           Note that for the game to run, you must download and unzip the assets folder, and place it in
           the a folder next to the game executable"
-    - name: Zip and include assets folder
-      uses: thedoctor0/zip-release@0.7.1
-      with:
-        type: 'zip'
-        filename: 'assets.zip'
-        path: '/assets'
+
