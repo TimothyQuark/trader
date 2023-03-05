@@ -24,4 +24,5 @@ jobs:
       uses: ncipollo/release-action@v1.12.0
       with:
         artifacts: "assets.zip"
+        commit: 'latest_release'
         token: ${{ secrets.GITHUB_TOKEN }}
