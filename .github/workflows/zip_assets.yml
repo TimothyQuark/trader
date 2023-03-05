@@ -28,4 +28,5 @@ jobs:
         artifacts: "assets.zip"
         name: 'Assets_ZIP'
         replacesArtifacts: true
+        allowUpdates: true
 
