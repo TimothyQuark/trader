@@ -17,7 +17,7 @@ bevy-inspector-egui = "0.17.0"
 
 [dependencies.bevy]
 version = "0.9.1"
-default-features = true
+default-features = false
 # These are the remaining default features other than `bevy_audio` and `mp3`.
 # Leave out unnecessary features.
 features = [
@@ -25,7 +25,9 @@ features = [
   # Also cannot debug properly because of using shared libraries,
   # see https://www.reddit.com/r/bevy/comments/zoz80w/how_to_debug_a_bevy_game_with_the_dynamic_feature/
   # "dynamic",
-  "render",
+  "render", # Allow rendering features
+  "png", # Allow PNG assets to be loaded
+  "x11" # Or use Wayland (but does not seem to work with WSL)
 ]
 
 [profile.dev]

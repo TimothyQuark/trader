@@ -1,4 +1,6 @@
 # See https://docs.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow
+# If there are permission problems, may have to give token access to repo stuff:
+# See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
 
 name: Release
 
@@ -74,7 +76,8 @@ jobs:
           Note that for the game to run, you must download and unzip the assets folder, and place it in
           the a folder next to the game executable"
     - name: Zip and include assets folder
-      uses: vimtor/action-zip@v1
+      uses: thedoctor0/zip-release@0.7.1
       with:
-        files: assets/
-        dest: assets.zip
+        type: 'zip'
+        filename: 'assets.zip'
+        path: '/assets'
