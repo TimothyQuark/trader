@@ -12,8 +12,9 @@ jobs:
     name: Zip and upload Trader assets folder
     runs-on: ubuntu-latest
     steps:
-    - name: Zip assets folder
+    - name: Checkout branch
       uses: actions/checkout@v3
+    - name: Zip assets folder
       uses: thedoctor0/zip-release@0.7.1
       with:
         type: 'zip'
