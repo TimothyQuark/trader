@@ -24,7 +24,7 @@ jobs:
       uses: ncipollo/release-action@v1.12.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.ref }}
+        tag: ${{ github.ref }} + '_assets'
         artifacts: "assets.zip"
         name: 'Assets ZIP'
         replacesArtifacts: true
