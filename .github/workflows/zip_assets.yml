@@ -19,7 +19,7 @@ jobs:
       with:
         type: 'zip'
         filename: 'assets.zip'
-        path: '/assets'
+        path: 'assets/'
     - name: Upload assets ZIP file
       uses: ncipollo/release-action@v1.12.0
       with:
