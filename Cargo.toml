@@ -24,7 +24,7 @@ features = [
   # dynamic compilation (remove when compiling game to be shipped!
   # Also cannot debug properly because of using shared libraries,
   # see https://www.reddit.com/r/bevy/comments/zoz80w/how_to_debug_a_bevy_game_with_the_dynamic_feature/
-  "dynamic",
+  # "dynamic",
   "render",
 ]
 

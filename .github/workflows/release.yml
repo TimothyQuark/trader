@@ -73,3 +73,8 @@ jobs:
         body: "Trader releases for Windows, Linux and MacOS.
           Note that for the game to run, you must download and unzip the assets folder, and place it in
           the a folder next to the game executable"
+    - name: Zip and include assets folder
+      uses: vimtor/action-zip@v1
+      with:
+        files: assets/
+        dest: assets.zip
