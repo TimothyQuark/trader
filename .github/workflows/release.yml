@@ -1,5 +1,7 @@
+# Workflow for building the game for various platforms, as well as zipping assets into a folder and adding to the release page
+
 # See https://docs.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow
-# If there are permission problems, may have to give token access to repo stuff:
+# If there are permission problems, may have to give token access to repo stuff (or enable them for the workflow manually):
 # See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
 
 name: Release
@@ -39,6 +41,28 @@ jobs:
   #   - name: Test
   #     run: cargo test --verbose
 
+  zip_assets:
+    name: Zip and upload Trader assets folder
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout branch
+      uses: actions/checkout@v3
+    - name: Zip assets folder
+      uses: thedoctor0/zip-release@0.7.1
+      with:
+        type: 'zip'
+        filename: 'assets.zip'
+        path: 'assets/'
+    - name: Upload assets ZIP file
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref_name }}
+        artifacts: "assets.zip"
+        name: 'Assets_ZIP'
+        replacesArtifacts: true
+        allowUpdates: true
+
   publish:
     # needs: test
     name: Publish for ${{ matrix.os }}
@@ -72,9 +96,8 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/${{ matrix.artifact_name }}
         asset_name: ${{ matrix.asset_name }}
-        tag: ${{ github.ref }}
+        tag: ${{ github.ref_name }}
         overwrite: true
         body: "Trader releases for Windows, Linux and MacOS.
-          Note that for the game to run, you must download and unzip the assets folder, and place it in
-          the a folder next to the game executable"
+          Note that to run the game, you must unzip the assets folder, and place it next to the game executable."
 
