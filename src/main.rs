@@ -1,3 +1,16 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+/*
+By default, Rust will spawn a console for Windows applications. This conditional application will check if
+the game was compiled in release mode, and if yes, will suppress the console. Otherwise,
+we can still use the console window for debugging in dev and test mode.
+More info:
+https://doc.rust-lang.org/reference/conditional-compilation.html
+https://github.com/rust-lang/rust/issues/67159
+https://github.com/rust-lang/rust/issues/67159#issuecomment-987882771 (possible workaround if we want output when program started in cmd)
+https://stackoverflow.com/questions/39204908/how-to-check-release-debug-builds-using-cfg-in-rust
+ */
+
 // use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 // use bevy::ecs::schedule::ReportExecutionOrderAmbiguities;
 // use bevy::log::LogPlugin;
