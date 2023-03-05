@@ -26,4 +26,6 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref }}
         artifacts: "assets.zip"
+        name: 'Assets ZIP'
+        replacesArtifacts: true
 
