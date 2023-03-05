@@ -23,5 +23,5 @@ jobs:
     - name: Upload assets ZIP file
       uses: ncipollo/release-action@v1.12.0
       with:
-        artifacts: "release.zip"
+        artifacts: "assets.zip"
         token: ${{ secrets.GITHUB_TOKEN }}
