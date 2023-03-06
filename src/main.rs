@@ -1,9 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 /*
-By default, Rust will spawn a console for Windows applications. This conditional application will check if
+By default, Rust will spawn a console for Windows applications. This conditional config will check if
 the game was compiled in release mode, and if yes, will suppress the console. Otherwise,
-we can still use the console window for debugging in dev and test mode.
+we can still use the console window for debugging in dev and test mode. In the future,
+a logger should be used to check errors users experience.
 More info:
 https://doc.rust-lang.org/reference/conditional-compilation.html
 https://github.com/rust-lang/rust/issues/67159
@@ -16,7 +17,7 @@ https://stackoverflow.com/questions/39204908/how-to-check-release-debug-builds-u
 // use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
-use bevy_inspector_egui::prelude::*;
+// use bevy_inspector_egui::prelude::*;
 // use bevy_inspector_egui::quick::ResourceInspectorPlugin;
 // use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
@@ -47,8 +48,9 @@ mod spawner;
 mod text;
 mod utilities;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Resource, Default, InspectorOptions)]
-#[reflect(Resource, InspectorOptions)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Resource, Default)]
+// #[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Resource, Default, InspectorOptions)]
+// #[reflect(Resource, InspectorOptions)]
 pub enum AppState {
     MainMenu,
     #[default]
