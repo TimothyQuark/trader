@@ -30,9 +30,10 @@ mod systems;
 use systems::{
     camera::init_camera,
     damage_system::{damage_system, delete_the_dead},
-    hover_tooltip::tooltip,
+    hover_tooltip::{map_tooltip, run_map_tooltip},
     // debugging::debug_states,
     input::player_input,
+    inventory::inventory_menu,
     map::init_map,
     map_indexing::map_indexing,
     melee::melee_combat_system,
@@ -64,6 +65,7 @@ pub enum AppState {
     DeleteDead,
     RunTimers,
     GameOver,
+    InventoryMenu,
 }
 
 fn main() {
@@ -112,8 +114,18 @@ fn main() {
                 .label("RenderTerminal")
                 .with_system(render_terminal)
                 .with_system(update_sidebars)
-                .with_system(map_indexing)
-                .with_system(tooltip),
+                .with_system(map_indexing),
+        )
+        .add_system_set(
+            SystemSet::new()
+                .label("MapTooltip")
+                .with_system(map_tooltip)
+                .with_run_criteria(run_map_tooltip),
+        )
+        .add_system_set(
+            SystemSet::on_update(AppState::InventoryMenu)
+                .label("InventoryMenu")
+                .with_system(inventory_menu),
         )
         // Game Systems
         // TODO: On new game, clear the World

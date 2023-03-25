@@ -1,3 +1,4 @@
+use bevy::ecs::schedule::ShouldRun;
 use bevy::prelude::*;
 
 use crate::{
@@ -8,6 +9,7 @@ use crate::{
         ships::{Player, ShipStats},
     },
     utilities::convert_cursor_to_world_coords,
+    AppState,
 };
 
 use super::{
@@ -15,7 +17,25 @@ use super::{
     terminal::{Terminal, TEXT_LAYER},
 };
 
-pub fn tooltip(
+/// Map Tooltip should only run if AppState is not in another game menu
+pub fn run_map_tooltip(state: ResMut<State<AppState>>) -> ShouldRun {
+    match state.current() {
+        AppState::MainMenu | AppState::InventoryMenu => ShouldRun::No,
+        AppState::NewGame
+        | AppState::NextLevel
+        | AppState::AwaitingInput
+        | AppState::IncrementTime
+        | AppState::RunAI
+        | AppState::RunCombat
+        | AppState::RunDamage
+        | AppState::DeleteDead
+        | AppState::RunTimers
+        | AppState::GameOver => ShouldRun::Yes,
+    }
+}
+
+/// System which highlights a map tile and presents information about it
+pub fn map_tooltip(
     mut current_ent: Local<usize>,
     mut commands: Commands,
     assets: Res<AssetServer>,

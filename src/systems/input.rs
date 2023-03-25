@@ -20,7 +20,8 @@ enum PlayerAction {
     WaitTurn, // Player pressed button to wait in place for single game turn
     Moved,
     MeleeAttack,
-    EnterWormhole, // Player tries to enter wormhole and go to next level
+    OpenInventoryMenu, // Player enters the inventory menu
+    EnterWormhole,     // Player tries to enter wormhole and go to next level
 }
 
 /// System which checks if there was any keyboard/mouse input
@@ -125,6 +126,9 @@ pub fn player_input(
     } else if keys.just_pressed(KeyCode::E) {
         // println!("Trying to enter location!");
         moved = try_enter_location(&map, &mut log, &game_time, &mut set);
+    } else if keys.just_pressed(KeyCode::I) {
+        println!("Entering the Inventory Menu");
+        moved = PlayerAction::OpenInventoryMenu;
     }
 
     // Used for debugging, to figure out what a key is
@@ -151,12 +155,15 @@ pub fn player_input(
             set.p0().single_mut().2.as_mut().turns += 1;
         }
         PlayerAction::EnterWormhole => {}
+        PlayerAction::OpenInventoryMenu => {}
     }
 
     // Check what action player undertook
     if moved == PlayerAction::EnterWormhole {
         println!("Player entered wormhole on turn {}", game_time.tick);
         state.set(AppState::NextLevel).unwrap();
+    } else if moved == PlayerAction::OpenInventoryMenu {
+        state.push(AppState::InventoryMenu).unwrap();
     } else if moved != PlayerAction::NoAction {
         // Player took action, skip TransitionTime and instead go to RunAI
         // println!("Player took action {:?} on turn {}", moved, game_time.tick);
