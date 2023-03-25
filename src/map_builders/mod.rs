@@ -3,6 +3,7 @@ use bevy::prelude::*;
 // use rand::rngs::SmallRng;
 // use rand::{Rng, SeedableRng};
 
+use crate::components::common::DeleteOnNewLevel;
 use crate::components::{map::Position, ships::Player};
 use crate::systems::map::Map;
 use crate::AppState;
@@ -20,9 +21,16 @@ mod common;
 pub fn build_new_map(
     mut commands: Commands,
     mut state: ResMut<State<AppState>>,
-    mut query: Query<&mut Position, With<Player>>,
+    mut player_query: Query<&mut Position, With<Player>>,
+    d_query: Query<Entity, &DeleteOnNewLevel>, // Entities to delete
 ) {
     println!("Building new map!");
+
+    // TODO: This should probably be broken out into its own system, which runs before map generator
+    // First, delete all entities with the delete flag
+    for entity in d_query.iter() {
+        commands.entity(entity).despawn();
+    }
 
     let new_depth = 1;
 
@@ -52,8 +60,8 @@ pub fn build_new_map(
 
     // Move the player to starting position
     let player_pos = result.get_starting_position();
-    query.single_mut().x = player_pos.x;
-    query.single_mut().y = player_pos.y;
+    player_query.single_mut().x = player_pos.x;
+    player_query.single_mut().y = player_pos.y;
 
     // Spawn entities on the map
     result.spawn_entities(&mut commands);

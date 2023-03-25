@@ -6,7 +6,10 @@ use crate::components::{
     ships::{Player, Ship, ShipStats},
     timers::WaitTimer,
 };
-use crate::systems::map::Map;
+use crate::systems::{
+    map::{Map, MapTileType},
+    terminal::GameLog,
+};
 use crate::AppState;
 
 use super::time::GameTime;
@@ -17,6 +20,7 @@ enum PlayerAction {
     WaitTurn, // Player pressed button to wait in place for single game turn
     Moved,
     MeleeAttack,
+    EnterWormhole, // Player tries to enter wormhole and go to next level
 }
 
 /// System which checks if there was any keyboard/mouse input
@@ -28,7 +32,8 @@ pub fn player_input(
     keys: Res<Input<KeyCode>>,
     map: Res<Map>,
     mut state: ResMut<State<AppState>>,
-
+    mut log: ResMut<GameLog>,
+    // mut key_evr: EventReader<KeyboardInput>, // Used for debugging // input::{keyboard::KeyboardInput, ButtonState},
     mut set: ParamSet<(
         //p0: player, p1: other ships
         Query<(Entity, &mut Position, &mut WaitTimer, &ShipStats), (With<Player>, With<Ship>)>,
@@ -117,7 +122,22 @@ pub fn player_input(
     } else if keys.just_pressed(KeyCode::Period) {
         // println!("Pressed full stop");
         moved = PlayerAction::WaitTurn;
+    } else if keys.just_pressed(KeyCode::E) {
+        // println!("Trying to enter location!");
+        moved = try_enter_location(&map, &mut log, &game_time, &mut set);
     }
+
+    // Used for debugging, to figure out what a key is
+    // for ev in key_evr.iter() {
+    //     match ev.state {
+    //         ButtonState::Pressed => {
+    //             println!("Key press: {:?} ({})", ev.key_code, ev.scan_code);
+    //         }
+    //         ButtonState::Released => {
+    //             println!("Key release: {:?} ({})", ev.key_code, ev.scan_code);
+    //         }
+    //     }
+    // }
 
     match moved {
         PlayerAction::NoAction => {}
@@ -130,11 +150,16 @@ pub fn player_input(
         PlayerAction::WaitTurn => {
             set.p0().single_mut().2.as_mut().turns += 1;
         }
+        PlayerAction::EnterWormhole => {}
     }
 
-    // Player took action, skip TransitionTime and instead go to RunAI
-    if moved != PlayerAction::NoAction {
-        println!("Player took action {:?} on turn {}", moved, game_time.tick);
+    // Check what action player undertook
+    if moved == PlayerAction::EnterWormhole {
+        println!("Player entered wormhole on turn {}", game_time.tick);
+        state.set(AppState::NextLevel).unwrap();
+    } else if moved != PlayerAction::NoAction {
+        // Player took action, skip TransitionTime and instead go to RunAI
+        // println!("Player took action {:?} on turn {}", moved, game_time.tick);
         state.set(AppState::RunAI).unwrap();
     }
 
@@ -214,4 +239,40 @@ fn try_move_player(
         // println!("Player bumped into a blocked tile");
         return PlayerAction::NoAction;
     }
+}
+
+/// Function which checks if player is trying to enter a valid location, returns what kind of location
+fn try_enter_location(
+    map: &Map,
+    log: &mut GameLog,
+    game_time: &Res<GameTime>,
+    p_set: &mut ParamSet<(
+        Query<(Entity, &mut Position, &mut WaitTimer, &ShipStats), (With<Player>, With<Ship>)>,
+        Query<&mut Position, (Without<Player>, With<Ship>)>,
+    )>,
+) -> PlayerAction {
+    let destination_idx = map.xy_idx(
+        p_set.p0().single_mut().1.as_ref().x,
+        p_set.p0().single_mut().1.as_ref().y,
+    );
+
+    // Check what kind of location we are trying to enter, return based on action.
+    // Add game log entry to confirm something happened
+    let destination_tile = map.tiles[destination_idx];
+    match destination_tile {
+        MapTileType::Wormhole => {
+            log.new_log("You enter the wormhole".to_string(), game_time.tick);
+            return PlayerAction::EnterWormhole;
+        }
+        MapTileType::Placeholder
+        | MapTileType::Wall
+        | MapTileType::Space
+        | MapTileType::Planet
+        | MapTileType::Star
+        | MapTileType::Moon
+        | MapTileType::Asteroid => {}
+    }
+
+    log.new_log("You cannot enter here".to_string(), game_time.tick);
+    return PlayerAction::NoAction;
 }

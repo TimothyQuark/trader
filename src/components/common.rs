@@ -10,3 +10,8 @@ pub struct GameName {
     /// Long name
     pub l_name: Option<String>,
 }
+
+/// Component that flags an Entity to be deleted when
+/// transitioning to a new level
+#[derive(Component)]
+pub struct DeleteOnNewLevel;

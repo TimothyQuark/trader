@@ -5,6 +5,7 @@ use bevy::prelude::{Color, Commands, Name};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
+use crate::components::common::DeleteOnNewLevel;
 use crate::components::ships::ShipStats;
 use crate::components::timers::WaitTimer;
 use crate::components::{
@@ -149,6 +150,7 @@ fn spawn_entity(commands: &mut Commands, spawn: &(&usize, &String), map: &Map) {
 fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, name: S) {
     commands
         .spawn_empty()
+        .insert(DeleteOnNewLevel)
         .insert(Position { x, y })
         .insert(Renderable {
             glyph,
@@ -196,6 +198,7 @@ fn big_pirate(commands: &mut Commands, x: i32, y: i32) {
 fn debris(commands: &mut Commands, x: i32, y: i32) {
     commands
         .spawn_empty()
+        .insert(DeleteOnNewLevel)
         .insert(Position { x, y })
         .insert(Renderable {
             glyph: 'º',

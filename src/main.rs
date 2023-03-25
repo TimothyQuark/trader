@@ -55,6 +55,7 @@ pub enum AppState {
     MainMenu,
     #[default]
     NewGame,
+    NextLevel,
     AwaitingInput,
     IncrementTime,
     RunAI,
@@ -119,6 +120,11 @@ fn main() {
         .add_system_set(
             SystemSet::on_enter(AppState::NewGame)
                 .label("NewGame")
+                .with_system(build_new_map),
+        )
+        .add_system_set(
+            SystemSet::on_enter(AppState::NextLevel)
+                .label("NextLevel")
                 .with_system(build_new_map),
         )
         .add_system_set(
