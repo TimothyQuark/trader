@@ -126,18 +126,18 @@ pub fn spawn_region(commands: &mut Commands, area: &[usize], map: &Map, map_dept
     }
 
     for spawn in spawn_points.iter() {
-        spawn_entity(commands, &spawn, &map);
+        spawn_random_entity(commands, &spawn, &map);
     }
 }
 
-fn spawn_entity(commands: &mut Commands, spawn: &(&usize, &String), map: &Map) {
+fn spawn_random_entity(commands: &mut Commands, spawn: &(&usize, &String), map: &Map) {
     let x = (*spawn.0 as u32 % map.width) as i32;
     let y = (*spawn.0 as u32 / map.width) as i32;
 
     match spawn.1.as_ref() {
-        "Small Pirate" => small_pirate(commands, x, y),
-        "Big Pirate" => big_pirate(commands, x, y),
-        "Debris" => debris(commands, x, y),
+        "Small Pirate" => spawn_small_pirate(commands, x, y),
+        "Big Pirate" => spawn_big_pirate(commands, x, y),
+        "Debris" => spawn_debris(commands, x, y),
         "None" => {}
         _ => {
             panic!("Attempting to spawn unknown entity: {}", spawn.1);
@@ -185,17 +185,18 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
         });
 }
 
-fn small_pirate(commands: &mut Commands, x: i32, y: i32) {
+fn spawn_small_pirate(commands: &mut Commands, x: i32, y: i32) {
     // TODO: Give pirates small random values to their stats, i.e. change function arguments of pirate
     // to accept range of values
     pirate(commands, x, y, 'p', "Small Pirate");
 }
 
-fn big_pirate(commands: &mut Commands, x: i32, y: i32) {
+fn spawn_big_pirate(commands: &mut Commands, x: i32, y: i32) {
     pirate(commands, x, y, 'P', "Small Pirate");
 }
 
-fn debris(commands: &mut Commands, x: i32, y: i32) {
+/// Spawn debris at given location. Public since other systems can spawn debris
+pub fn spawn_debris(commands: &mut Commands, x: i32, y: i32) {
     commands
         .spawn_empty()
         .insert(DeleteOnNewLevel)

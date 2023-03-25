@@ -20,9 +20,9 @@ pub fn increment_time(
 ) {
     // Increment game time
     time.tick += 1;
-    println!("------- GameTime: {} -------", time.tick);
+    // println!("------- GameTime: {} -------", time.tick);
 
-    println!("Increment Time running");
+    // println!("Increment Time running");
 
     for mut t in query.iter_mut() {
         /*
@@ -40,15 +40,15 @@ pub fn increment_time(
         if let Some(_) = t.1 {
             if t.0.turns == 0 {
                 // Player can take action, transition to AwaitingInput state
-                println!("Player can take an action this turn");
+                // println!("Player can take an action this turn");
                 state.set(AppState::AwaitingInput).unwrap();
                 // println!("Player AwaitingInput on turn {}", time.tick);
             } else {
                 // Player cannot take action, transition to next game state, RunAI
-                println!(
-                    "Player does not take action, remaining WaitingTime: {}",
-                    t.0.turns
-                );
+                // println!(
+                //     "Player does not take action, remaining WaitingTime: {}",
+                //     t.0.turns
+                // );
                 state.set(AppState::RunAI).unwrap();
             }
         }

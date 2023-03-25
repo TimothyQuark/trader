@@ -16,5 +16,5 @@ To play the game, head to the [releases](https://github.com/TimothyQuark/trader/
 
 * Use the `arrows keys` to move your spaceship. Use CMD and SHIFT with the arrow keys to move diagonally.
 * Use the `arrow keys` to attack enemies in close range.
-* Enter a wormhole or  explore a planet using the `E` key.
+* Enter or examine a location under the Player using the `E` key.
 * Use the `.` key to wait for a turn.

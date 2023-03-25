@@ -1,11 +1,16 @@
 use bevy::prelude::*;
 
+use rand::rngs::SmallRng;
+use rand::{Rng, SeedableRng};
+
 use crate::{
     components::{
         combat::SufferDamage,
         common::GameName,
-        ships::{Player, ShipStats},
+        map::Position,
+        ships::{Pirate, Player, Ship, ShipStats},
     },
+    spawner::spawn_debris,
     AppState,
 };
 
@@ -25,11 +30,11 @@ pub fn damage_system(
     for (entity, mut ship_stats, suffer) in query.iter_mut() {
         ship_stats.curr_health -= suffer.sum_dmg() as i32;
 
-        println!(
-            "Entity {} has taken {} damage",
-            entity.index(),
-            suffer.sum_dmg()
-        );
+        // println!(
+        //     "Entity {} has taken {} damage",
+        //     entity.index(),
+        //     suffer.sum_dmg()
+        // );
 
         // Entity has now taken damage, rmeove component
         commands.entity(entity).remove::<SufferDamage>();
@@ -52,7 +57,17 @@ pub fn delete_the_dead(
     mut state: ResMut<State<AppState>>,
     mut log: ResMut<GameLog>,
     time: Res<GameTime>,
-    query: Query<(Entity, &ShipStats, Option<&Player>, &GameName)>,
+    ship_query: Query<
+        (
+            Entity,
+            &ShipStats,
+            &Position,
+            Option<&Player>,
+            &GameName,
+            Option<&Pirate>,
+        ),
+        With<Ship>,
+    >,
 ) {
     // TODO: A better method is to instead have a component IsDead, that is added to an Entity if a system determines they are dead
     // Other systems will check if this Option exists, and if it does, then the system skips them.
@@ -60,7 +75,9 @@ pub fn delete_the_dead(
 
     // println!("Deleting the Dead!");
 
-    for (entity, ship_stats, player, name) in query.iter() {
+    let mut rng = SmallRng::from_entropy();
+
+    for (entity, ship_stats, pos, player, name, pirate) in ship_query.iter() {
         if let Some(_) = player {
             if ship_stats.curr_health < 1 {
                 println!("The player has died! Game over");
@@ -74,6 +91,14 @@ pub fn delete_the_dead(
             commands.entity(entity).despawn();
             let s = format!("The {} has died", name.name);
             log.new_log(s, time.tick);
+
+            // Check if pirate. Chance to spawn debris that can be looted for items
+            if let Some(_) = pirate {
+                if rng.gen_bool(0.5) {
+                    println!("Pirate has spawned debris!");
+                    spawn_debris(&mut commands, pos.x, pos.y);
+                }
+            }
         }
     }
 
