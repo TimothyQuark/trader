@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+// use bevy::text::Text
 
 // This module contains useful boilerplate code and structs for the text in DWorld
 
@@ -7,17 +8,20 @@ use bevy::prelude::*;
 
 /// Default TextStyle used by DWorld
 #[derive(Resource)]
-pub struct DefaultTextStyle(pub TextStyle);
+pub struct DefaultTextStyle(pub TextFont);
 
 /// Loads the default font in DWorld, and returns the default text style
-pub fn default_textstyle(assets: Res<AssetServer>) -> TextStyle {
-    let font = assets.load("square.ttf");
-    TextStyle {
-        font,
-        // Font size is not in pixels, or there is padding between sections. Hence, smaller than TILESIZE, this was fitted manually
-        font_size: 18.1,
-        color: Color::WHITE,
-    }
+pub fn default_textstyle(assets: Res<AssetServer>) -> (TextFont, TextColor) {
+    let font: Handle<Font> = assets.load("square.ttf");
+    (
+        TextFont {
+            font,
+            // Font size is not in pixels, or there is padding between sections. Hence, smaller than TILESIZE, this was fitted manually
+            font_size: 18.1,
+            ..Default::default()
+        },
+        TextColor { 0: Color::WHITE },
+    )
 }
 
 pub fn char_to_cp437(glyph: char) -> usize {
