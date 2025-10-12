@@ -15,7 +15,7 @@ pub struct GameTime {
 /// game state to AwaitingInput
 pub fn increment_time(
     mut query: Query<(&mut WaitTimer, Option<&Player>)>,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut time: ResMut<GameTime>,
 ) {
     // Increment game time
@@ -41,7 +41,7 @@ pub fn increment_time(
             if t.0.turns == 0 {
                 // Player can take action, transition to AwaitingInput state
                 // println!("Player can take an action this turn");
-                state.set(AppState::AwaitingInput).unwrap();
+                next_state.set(AppState::AwaitingInput);
                 // println!("Player AwaitingInput on turn {}", time.tick);
             } else {
                 // Player cannot take action, transition to next game state, RunAI
@@ -49,7 +49,7 @@ pub fn increment_time(
                 //     "Player does not take action, remaining WaitingTime: {}",
                 //     t.0.turns
                 // );
-                state.set(AppState::RunAI).unwrap();
+                next_state.set(AppState::RunAI);
             }
         }
     }

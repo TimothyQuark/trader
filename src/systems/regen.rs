@@ -15,7 +15,7 @@ use super::{terminal::GameLog, time::GameTime};
 /// Once completed, transition to next state
 pub fn regen_health(
     mut query: Query<(&mut HealthTimer, Option<&mut ShipStats>, Option<&Player>)>,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut log: ResMut<GameLog>,
     time: Res<GameTime>,
 ) {
@@ -41,6 +41,5 @@ pub fn regen_health(
     }
 
     // System done, transition to next state
-    // state.set(AppState::AwaitingInput).unwrap();
-    state.set(AppState::IncrementTime).unwrap();
+    next_state.set(AppState::IncrementTime);
 }

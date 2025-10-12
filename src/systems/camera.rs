@@ -9,5 +9,5 @@ pub fn init_camera(mut commands: Commands) {
 
     // Spawn camera and UI Camera bundles
     // MainCamera component added to make finding this entity easier
-    commands.spawn((Camera2dBundle::default(), MainCamera));
+    commands.spawn((Camera2d, MainCamera));
 }

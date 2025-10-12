@@ -30,9 +30,9 @@ pub fn player_input(
     commands: Commands,
     time: Res<Time>,          // Bevy time
     game_time: Res<GameTime>, // Game time in turns
-    keys: Res<Input<KeyCode>>,
+    keys: Res<ButtonInput<KeyCode>>,
     map: Res<Map>,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut log: ResMut<GameLog>,
     // mut key_evr: EventReader<KeyboardInput>, // Used for debugging // input::{keyboard::KeyboardInput, ButtonState},
     mut set: ParamSet<(
@@ -65,7 +65,7 @@ pub fn player_input(
     // As state transitions are so fast, it can cause to sort of hang when in this system. Hence a small time delay is added
     // Delay only needs to be very small, 1ms.
     let delay: f64 = 0.001;
-    let passed_time: f64 = time.elapsed_seconds_f64() - *last_time;
+    let passed_time: f64 = time.elapsed_secs_f64() - *last_time;
     // println!("Passed time: {passed_time}"); // Game will lag with print statement
     if passed_time < delay {
         // If time interval too short, exit function prematurely
@@ -74,11 +74,11 @@ pub fn player_input(
 
     // Update old time, to use for next user input
     // println!("Time passed: {}", passed_time);
-    *last_time = time.elapsed_seconds_f64();
+    *last_time = time.elapsed_secs_f64();
 
     // No longer needed as IncrementTime skips player systems if WaitTime is not 0.
     // Instead, panic if this is not true
-    if set.p0().single_mut().2.as_mut().turns > 0 {
+    if set.p0().single_mut().unwrap().2.as_mut().turns > 0 {
         panic!("Player's WaitTime is not 0, but we are taking a player turn!");
     }
     // // Player WaitingTime is not 0, so transition to IncrementTime
@@ -96,37 +96,37 @@ pub fn player_input(
     // Check diagonal movements before normal movements. Alternatively, check if
     // Shift or control are NOT pressed.
     let mut moved = PlayerAction::NoAction;
-    if keys.just_pressed(KeyCode::Right) && keys.pressed(KeyCode::LShift) {
+    if keys.just_pressed(KeyCode::ArrowRight) && keys.pressed(KeyCode::ShiftLeft) {
         // println!("Right Shift pressed");
         moved = try_move_player(1, 1, &map, commands, &game_time, &mut set);
-    } else if keys.just_pressed(KeyCode::Right) && keys.pressed(KeyCode::LControl) {
+    } else if keys.just_pressed(KeyCode::ArrowRight) && keys.pressed(KeyCode::ControlLeft) {
         // println!("Right Control pressed");
         moved = try_move_player(1, -1, &map, commands, &game_time, &mut set);
-    } else if keys.just_pressed(KeyCode::Left) && keys.pressed(KeyCode::LShift) {
+    } else if keys.just_pressed(KeyCode::ArrowLeft) && keys.pressed(KeyCode::ShiftLeft) {
         // println!("Right key pressed");
         moved = try_move_player(-1, 1, &map, commands, &game_time, &mut set);
-    } else if keys.just_pressed(KeyCode::Left) && keys.pressed(KeyCode::LControl) {
+    } else if keys.just_pressed(KeyCode::ArrowLeft) && keys.pressed(KeyCode::ControlLeft) {
         // println!("Right key pressed");
         moved = try_move_player(-1, -1, &map, commands, &game_time, &mut set);
-    } else if keys.just_pressed(KeyCode::Down) {
+    } else if keys.just_pressed(KeyCode::ArrowDown) {
         // println!("Down key pressed");
         moved = try_move_player(0, -1, &map, commands, &game_time, &mut set);
-    } else if keys.just_pressed(KeyCode::Up) {
+    } else if keys.just_pressed(KeyCode::ArrowUp) {
         // println!("Up key pressed");
         moved = try_move_player(0, 1, &map, commands, &game_time, &mut set);
-    } else if keys.just_pressed(KeyCode::Left) {
+    } else if keys.just_pressed(KeyCode::ArrowLeft) {
         // println!("Left key pressed");
         moved = try_move_player(-1, 0, &map, commands, &game_time, &mut set);
-    } else if keys.just_pressed(KeyCode::Right) {
+    } else if keys.just_pressed(KeyCode::ArrowRight) {
         // println!("Right key pressed");
         moved = try_move_player(1, 0, &map, commands, &game_time, &mut set);
     } else if keys.just_pressed(KeyCode::Period) {
         // println!("Pressed full stop");
         moved = PlayerAction::WaitTurn;
-    } else if keys.just_pressed(KeyCode::E) {
+    } else if keys.just_pressed(KeyCode::KeyE) {
         // println!("Trying to enter location!");
         moved = try_enter_location(&map, &mut log, &game_time, &mut set);
-    } else if keys.just_pressed(KeyCode::I) {
+    } else if keys.just_pressed(KeyCode::KeyI) {
         println!("Entering the Inventory Menu");
         moved = PlayerAction::OpenInventoryMenu;
     }
@@ -146,13 +146,15 @@ pub fn player_input(
     match moved {
         PlayerAction::NoAction => {}
         PlayerAction::Moved => {
-            set.p0().single_mut().2.as_mut().turns += set.p0().single_mut().3.speed;
+            set.p0().single_mut().unwrap().2.as_mut().turns +=
+                set.p0().single_mut().unwrap().3.speed;
         }
         PlayerAction::MeleeAttack => {
-            set.p0().single_mut().2.as_mut().turns += set.p0().single_mut().3.melee_speed;
+            set.p0().single_mut().unwrap().2.as_mut().turns +=
+                set.p0().single_mut().unwrap().3.melee_speed;
         }
         PlayerAction::WaitTurn => {
-            set.p0().single_mut().2.as_mut().turns += 1;
+            set.p0().single_mut().unwrap().2.as_mut().turns += 1;
         }
         PlayerAction::EnterWormhole => {}
         PlayerAction::OpenInventoryMenu => {}
@@ -161,13 +163,13 @@ pub fn player_input(
     // Check what action player undertook
     if moved == PlayerAction::EnterWormhole {
         println!("Player entered wormhole on turn {}", game_time.tick);
-        state.set(AppState::NextLevel).unwrap();
+        next_state.set(AppState::NextLevel);
     } else if moved == PlayerAction::OpenInventoryMenu {
-        state.push(AppState::InventoryMenu).unwrap();
+        next_state.set(AppState::InventoryMenu);
     } else if moved != PlayerAction::NoAction {
         // Player took action, skip TransitionTime and instead go to RunAI
         // println!("Player took action {:?} on turn {}", moved, game_time.tick);
-        state.set(AppState::RunAI).unwrap();
+        next_state.set(AppState::RunAI);
     }
 
     // println!("No player input detected");
@@ -189,17 +191,17 @@ fn try_move_player(
     // println!("Trying to move player");
 
     // Check if player tries to go out of bounds
-    if p_set.p0().single().1.x + delta_x < 0
-        || p_set.p0().single().1.x + delta_x > map.width as i32 - 1
-        || p_set.p0().single().1.y + delta_y < 0
-        || p_set.p0().single().1.y + delta_y > map.height as i32 - 1
+    if p_set.p0().single().unwrap().1.x + delta_x < 0
+        || p_set.p0().single().unwrap().1.x + delta_x > map.width as i32 - 1
+        || p_set.p0().single().unwrap().1.y + delta_y < 0
+        || p_set.p0().single().unwrap().1.y + delta_y > map.height as i32 - 1
     {
         return PlayerAction::NoAction;
     }
 
     let destination_idx = map.xy_idx(
-        p_set.p0().single_mut().1.as_ref().x + delta_x,
-        p_set.p0().single_mut().1.as_ref().y + delta_y,
+        p_set.p0().single_mut().unwrap().1.as_ref().x + delta_x,
+        p_set.p0().single_mut().unwrap().1.as_ref().y + delta_y,
     );
 
     // Check if player is trying to attack a neighboring tile
@@ -210,7 +212,7 @@ fn try_move_player(
             //     potential_target.index(),
             //     ship_stats
             // );
-            if let Ok((player_entity, _, _, _)) = p_set.p0().get_single() {
+            if let Ok((player_entity, _, _, _)) = p_set.p0().single() {
                 commands.entity(player_entity).insert(WantsToMelee {
                     target: *potential_target,
                 });
@@ -238,8 +240,8 @@ fn try_move_player(
 
     // Check if destination is blocked
     if !map.blocked_tiles[destination_idx] {
-        p_set.p0().single_mut().1.x += delta_x;
-        p_set.p0().single_mut().1.y += delta_y;
+        p_set.p0().single_mut().unwrap().1.x += delta_x;
+        p_set.p0().single_mut().unwrap().1.y += delta_y;
 
         return PlayerAction::Moved;
     } else {
@@ -259,8 +261,8 @@ fn try_enter_location(
     )>,
 ) -> PlayerAction {
     let destination_idx = map.xy_idx(
-        p_set.p0().single_mut().1.as_ref().x,
-        p_set.p0().single_mut().1.as_ref().y,
+        p_set.p0().single_mut().unwrap().1.as_ref().x,
+        p_set.p0().single_mut().unwrap().1.as_ref().y,
     );
 
     // Check what kind of location we are trying to enter, return based on action.

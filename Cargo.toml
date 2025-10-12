@@ -11,26 +11,27 @@ repository = "https://github.com/TimothyQuark/trader"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pathfinding = "3.0.11"
-rand =  {version = "0.8.4", features = ["small_rng"]}
+pathfinding = "4.14.0"
+rand =  {version = "0.9.0", features = ["small_rng"]}
+bevy = { version = "0.17.2", default-features = true }
 # bevy-inspector-egui = "0.17.0"
 
-[dependencies.bevy]
-version = "0.9.1"
-default-features = false
-# These are the remaining default features other than `bevy_audio` and `mp3`.
-# Leave out unnecessary features.
-features = [
-  # dynamic compilation (remove when compiling game to be shipped!
-  # Also cannot debug properly because of using shared libraries,
-  # see https://www.reddit.com/r/bevy/comments/zoz80w/how_to_debug_a_bevy_game_with_the_dynamic_feature/
-  "dynamic",
-  "render", # Allow rendering features
-  "bevy_asset", # Allow loading of assets
-  "png", # Allow PNG assets to be loaded
-  "x11", # Or use Wayland (but does not seem to work with WSL)
-
-]
+# [dependencies.bevy]
+# version = "0.17.2"
+# default-features = false
+# # These are the remaining default features other than `bevy_audio` and `mp3`.
+# # Leave out unnecessary features.
+# features = [
+#   # dynamic compilation (remove when compiling game to be shipped!
+#   # Also cannot debug properly because of using shared libraries,
+#   # see https://www.reddit.com/r/bevy/comments/zoz80w/how_to_debug_a_bevy_game_with_the_dynamic_feature/
+#   "dynamic_linking", # Renamed from "dynamic" in Bevy 0.10
+#   "bevy_render", # Renamed from "render" - allow rendering features
+#   "bevy_asset", # Allow loading of assets
+#   "png", # Allow PNG assets to be loaded
+#   "x11", # Or use Wayland (but does not seem to work with WSL)
+#   "state"
+# ]
 
 [profile.dev]
 opt-level = 1

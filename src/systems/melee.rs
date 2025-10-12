@@ -16,7 +16,7 @@ use super::{terminal::GameLog, time::GameTime};
 /// Once finished, transitions to next AppState
 pub fn melee_combat_system(
     mut commands: Commands,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut log: ResMut<GameLog>,
     time: Res<GameTime>,
     attack_q: Query<(Entity, &WantsToMelee, &ShipStats, &GameName)>,
@@ -40,21 +40,20 @@ pub fn melee_combat_system(
             //     ship_stats.melee_dmg
             // );
             // You can only get components that are in the Query
-            let target_stats = target_q
-                .get_component::<ShipStats>(wants_melee.target)
-                .unwrap();
+            let (t_status, _, t_name) = target_q.get(wants_melee.target).unwrap();
 
-            let damage = i32::max(0, ship_stats.melee_dmg as i32 - target_stats.armor as i32);
+            let damage = i32::max(0, ship_stats.melee_dmg as i32 - t_status.armor as i32);
+            let t_name_clone = t_name.name.clone();
+            // Drop the immutable borrow by moving out of the scope
+            drop((t_status, t_name)); // TODO: I really don't like this, there has to be a more Rusty way to solve this mutability problem with target_q
+
             if damage == 0 {
                 // println!(
                 //     "Entity {} is unable to hurt entity {} (post mitigation)",
                 //     entity.index(),
                 //     wants_melee.target.index()
                 // );
-                let t_name = target_q
-                    .get_component::<GameName>(wants_melee.target)
-                    .unwrap();
-                let s = format!("The {} is unable to damage {}", a_name.name, t_name.name);
+                let s = format!("The {} is unable to damage {}", a_name.name, t_name_clone);
                 log.new_log(s, time.tick);
             } else {
                 // TODO: Print to game console, not terminal
@@ -70,12 +69,9 @@ pub fn melee_combat_system(
                     wants_melee.target,
                     damage as u32,
                 );
-                let t_name = target_q
-                    .get_component::<GameName>(wants_melee.target)
-                    .unwrap();
                 let s = format!(
                     "The {} shoots {} for {} damage",
-                    a_name.name, t_name.name, damage
+                    a_name.name, t_name_clone, damage
                 );
                 log.new_log(s, time.tick);
             }
@@ -86,5 +82,5 @@ pub fn melee_combat_system(
     }
 
     // Combat done, transition to RunDamage
-    state.set(AppState::RunDamage).unwrap();
+    next_state.set(AppState::RunDamage);
 }

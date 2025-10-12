@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use bevy::prelude::{Color, Commands, Name};
+use bevy::color::palettes::basic;
+use bevy::color::palettes::css;
+use bevy::prelude::{Commands, Name};
 
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -59,7 +61,7 @@ impl RandomTable {
         if self.total_weight == 0 {
             return "None".to_string();
         }
-        let mut roll = rng.gen_range(1..self.total_weight);
+        let mut roll = rng.random_range(1..self.total_weight);
         let mut index: usize = 0;
 
         while roll > 0 {
@@ -106,8 +108,11 @@ pub fn spawn_region(commands: &mut Commands, area: &[usize], map: &Map, map_dept
     let mut spawn_points: HashMap<usize, String> = HashMap::new();
     let mut areas: Vec<usize> = Vec::from(area);
 
-    let mut rng = SmallRng::from_entropy();
-    let num_spawns = i32::min(areas.len() as i32, rng.gen_range(1..MAX_PIRATES));
+    let mut rng = SmallRng::from_rng(&mut rand::rng());
+    let num_spawns = i32::min(
+        areas.len() as i32,
+        rng.random_range(1..MAX_PIRATES + 3) + (map_depth - 1) - 3,
+    );
     if num_spawns == 0 {
         return;
     }
@@ -117,7 +122,7 @@ pub fn spawn_region(commands: &mut Commands, area: &[usize], map: &Map, map_dept
         let array_index = if areas.len() == 1 {
             0usize
         } else {
-            (rng.gen_range(1..areas.len()) - 1) as usize
+            (rng.random_range(1..areas.len()) - 1) as usize
         };
 
         let map_idx = areas[array_index];
@@ -154,7 +159,7 @@ fn pirate<S: ToString>(commands: &mut Commands, x: i32, y: i32, glyph: char, nam
         .insert(Position { x, y })
         .insert(Renderable {
             glyph,
-            fg: Color::RED,
+            fg: basic::RED.into(),
             bg: None,
             render_order: 2,
         })
@@ -203,7 +208,7 @@ pub fn spawn_debris(commands: &mut Commands, x: i32, y: i32) {
         .insert(Position { x, y })
         .insert(Renderable {
             glyph: 'º',
-            fg: Color::GOLD,
+            fg: css::GOLD.into(),
             bg: None,
             render_order: 3,
         })

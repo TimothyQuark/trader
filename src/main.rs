@@ -16,7 +16,6 @@ https://stackoverflow.com/questions/39204908/how-to-check-release-debug-builds-u
 // use bevy::ecs::schedule::ReportExecutionOrderAmbiguities;
 // use bevy::log::LogPlugin;
 use bevy::prelude::*;
-use bevy::window::WindowMode;
 // use bevy_inspector_egui::prelude::*;
 // use bevy_inspector_egui::quick::ResourceInspectorPlugin;
 // use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -49,12 +48,13 @@ mod spawner;
 mod text;
 mod utilities;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Resource, Default)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States, Default)]
 // #[derive(Debug, Clone, Eq, PartialEq, Hash, Reflect, Resource, Default, InspectorOptions)]
 // #[reflect(Resource, InspectorOptions)]
 pub enum AppState {
-    MainMenu,
     #[default]
+    LoadGame, // Basically everything that falls into StartUp
+    MainMenu,
     NewGame,
     NextLevel,
     AwaitingInput,
@@ -75,104 +75,67 @@ fn main() {
 
     // App Builder.
     App::new()
-        // Starting State
-        .add_state(AppState::NewGame)
+        // Window example: https://github.com/bevyengine/bevy/blob/v0.17.2/examples/window/window_settings.rs
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Space Trader".to_string(),
+                resolution: (screen_width as u32, screen_height as u32).into(),
+                resizable: false,
+                ..Default::default()
+            }),
+            ..default()
+        }))
+        // .add_plugins(WorldInspectorPlugin)
+        // .register_type::<Renderable>()
+        // .add_plugins(ResourceInspectorPlugin::<AppState>::default()) // Debug a resource
+        // .add_plugins(LogDiagnosticsPlugin::default())
+        // .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        // .add_systems(Update, debug_states)
+        // .init_resource::<ReportExecutionOrderAmbiguities>() // Use to look at execution order in LogPlugin
         // Resources
         .insert_resource(ClearColor(Color::BLACK)) // App bg color. Will see if there are problems
         .insert_resource(terminal)
         .insert_resource(GameTime { tick: 0 })
         .insert_resource(GameLog::default())
         // .register_type::<AppState>() // use for ResourceInspectorPlugin
-        // Plugins & Debuggers
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
-                title: "Space Trader".to_string(),
-                width: screen_width as f32,
-                height: screen_height as f32,
-                resizable: false,
-                mode: WindowMode::Windowed,
-                ..Default::default()
-            },
-            ..default()
-        }))
-        // .add_plugin(WorldInspectorPlugin)
-        // .register_type::<Renderable>()
-        // .add_plugin(ResourceInspectorPlugin::<AppState>::default()) // Debug a resource
-        // .add_plugin(LogDiagnosticsPlugin::default())
-        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        // .add_system(debug_states)
-        // .init_resource::<ReportExecutionOrderAmbiguities>() // Use to look at execution order in LogPlugin
-        .add_system(bevy::window::close_on_esc) // Used for debugging
+        // Starting State
+        .init_state::<AppState>()
         // Startup systems
-        .add_startup_system(init_camera.label("init_camera"))
-        .add_startup_system(init_terminal)
-        .add_startup_system(init_map)
-        .add_startup_system(init_player)
-        // Render Systems
-        .add_system_set(
-            SystemSet::new()
-                .label("RenderTerminal")
-                .with_system(render_terminal)
-                .with_system(update_sidebars)
-                .with_system(map_indexing),
-        )
-        .add_system_set(
-            SystemSet::new()
-                .label("MapTooltip")
-                .with_system(map_tooltip)
-                .with_run_criteria(run_map_tooltip),
-        )
-        .add_system_set(
-            SystemSet::on_update(AppState::InventoryMenu)
-                .label("InventoryMenu")
-                .with_system(inventory_menu),
+        .add_systems(Startup, (init_camera, init_terminal, init_map, init_player))
+        // Render Systems (run every frame in Update schedule)
+        // .add_systems(Update, bevy::window::close_on_esc)
+        .add_systems(Update, render_terminal)
+        .add_systems(Update, update_sidebars)
+        .add_systems(Update, map_indexing)
+        // Map tooltip system with run condition
+        .add_systems(Update, map_tooltip.run_if(run_map_tooltip))
+        // Inventory menu system
+        .add_systems(
+            Update,
+            inventory_menu.run_if(in_state(AppState::InventoryMenu)),
         )
         // Game Systems
         // TODO: On new game, clear the World
-        .add_system_set(
-            SystemSet::on_enter(AppState::NewGame)
-                .label("NewGame")
-                .with_system(build_new_map),
+        .add_systems(OnEnter(AppState::NewGame), build_new_map)
+        .add_systems(OnEnter(AppState::NextLevel), build_new_map)
+        .add_systems(
+            Update,
+            increment_time.run_if(in_state(AppState::IncrementTime)),
         )
-        .add_system_set(
-            SystemSet::on_enter(AppState::NextLevel)
-                .label("NextLevel")
-                .with_system(build_new_map),
+        .add_systems(
+            Update,
+            player_input.run_if(in_state(AppState::AwaitingInput)),
         )
-        .add_system_set(
-            SystemSet::on_update(AppState::IncrementTime)
-                .label("IncrementTime")
-                .with_system(increment_time),
+        .add_systems(Update, pirate_ai.run_if(in_state(AppState::RunAI)))
+        .add_systems(
+            Update,
+            melee_combat_system.run_if(in_state(AppState::RunCombat)),
         )
-        .add_system_set(
-            SystemSet::on_update(AppState::AwaitingInput)
-                .label("PlayerTurn")
-                .with_system(player_input),
+        .add_systems(Update, damage_system.run_if(in_state(AppState::RunDamage)))
+        .add_systems(
+            Update,
+            delete_the_dead.run_if(in_state(AppState::DeleteDead)),
         )
-        .add_system_set(
-            SystemSet::on_update(AppState::RunAI)
-                .label("RunAI")
-                .with_system(pirate_ai),
-        )
-        .add_system_set(
-            SystemSet::on_update(AppState::RunCombat)
-                .label("RunCombat")
-                .with_system(melee_combat_system),
-        )
-        .add_system_set(
-            SystemSet::on_update(AppState::RunDamage)
-                .label("RunDamage")
-                .with_system(damage_system),
-        )
-        .add_system_set(
-            SystemSet::on_update(AppState::DeleteDead)
-                .label("DeleteDead")
-                .with_system(delete_the_dead),
-        )
-        .add_system_set(
-            SystemSet::on_update(AppState::RunTimers)
-                .label("RunTimers")
-                .with_system(regen_health),
-        )
+        .add_systems(Update, regen_health.run_if(in_state(AppState::RunTimers)))
         .run();
 }

@@ -7,16 +7,16 @@ use bevy::prelude::*;
 
 /// Default TextStyle used by DWorld
 #[derive(Resource)]
-pub struct DefaultTextStyle(pub TextStyle);
+pub struct DefaultTextStyle(pub TextFont);
 
 /// Loads the default font in DWorld, and returns the default text style
-pub fn default_textstyle(assets: Res<AssetServer>) -> TextStyle {
+pub fn default_textstyle(assets: Res<AssetServer>) -> TextFont {
     let font = assets.load("square.ttf");
-    TextStyle {
+    TextFont {
         font,
         // Font size is not in pixels, or there is padding between sections. Hence, smaller than TILESIZE, this was fitted manually
         font_size: 18.1,
-        color: Color::WHITE,
+        ..Default::default()
     }
 }
 

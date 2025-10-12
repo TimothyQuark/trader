@@ -18,7 +18,7 @@ use super::time::GameTime;
 pub fn pirate_ai(
     mut commands: Commands,
     mut map: ResMut<Map>,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     _time: Res<GameTime>,
     mut p: ParamSet<(
         Query<(Entity, &mut Position, &mut WaitTimer, &ShipStats), With<Pirate>>,
@@ -31,8 +31,8 @@ pub fn pirate_ai(
     let goal: Position;
     let player_entity: Entity;
     {
-        goal = p.p1().single().1.clone();
-        player_entity = p.p1().single().0;
+        goal = p.p1().single().unwrap().1.clone();
+        player_entity = p.p1().single().unwrap().0;
         // println!("Player at position: x: {}, y: {}", goal.x, goal.y);
     }
 
@@ -104,5 +104,5 @@ pub fn pirate_ai(
     }
 
     // Pirate AI is done, so transition to next state, RunCombat
-    state.set(AppState::RunCombat).unwrap();
+    next_state.set(AppState::RunCombat);
 }

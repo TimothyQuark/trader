@@ -5,23 +5,33 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug Rust",
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'trader'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=trader",
-                    "--package=trader"
-                ],
-                "filter": {
-                    "name": "trader",
-                    "kind": "bin"
-                }
-            },
+            "program": "${workspaceFolder}/target/debug/trader",
             "args": [],
-            "cwd": "${workspaceFolder}"
-        },
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "cargo build",
+            // "stopAtEntry": false
+        }
+        // {
+        //     "type": "lldb",
+        //     "request": "launch",
+        //     "name": "Debug executable 'trader'",
+        //     "cargo": {
+        //         "args": [
+        //             "build",
+        //             "--bin=trader",
+        //             "--package=trader"
+        //         ],
+        //         "filter": {
+        //             "name": "trader",
+        //             "kind": "bin"
+        //         }
+        //     },
+        //     "args": [],
+        //     "cwd": "${workspaceFolder}"
+        // },
         // {
         //     "type": "lldb",
         //     "request": "launch",
@@ -40,6 +50,6 @@
         //     },
         //     "args": [],
         //     "cwd": "${workspaceFolder}"
-        // }
+        // },
     ]
 }

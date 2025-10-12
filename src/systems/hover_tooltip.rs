@@ -1,4 +1,5 @@
-use bevy::ecs::schedule::ShouldRun;
+use bevy::color::palettes::basic;
+use bevy::color::palettes::css;
 use bevy::prelude::*;
 
 use crate::{
@@ -18,9 +19,9 @@ use super::{
 };
 
 /// Map Tooltip should only run if AppState is not in another game menu
-pub fn run_map_tooltip(state: ResMut<State<AppState>>) -> ShouldRun {
-    match state.current() {
-        AppState::MainMenu | AppState::InventoryMenu => ShouldRun::No,
+pub fn run_map_tooltip(state: Res<State<AppState>>) -> bool {
+    match state.get() {
+        AppState::MainMenu | AppState::InventoryMenu | AppState::LoadGame => false,
         AppState::NewGame
         | AppState::NextLevel
         | AppState::AwaitingInput
@@ -30,7 +31,7 @@ pub fn run_map_tooltip(state: ResMut<State<AppState>>) -> ShouldRun {
         | AppState::RunDamage
         | AppState::DeleteDead
         | AppState::RunTimers
-        | AppState::GameOver => ShouldRun::Yes,
+        | AppState::GameOver => true,
     }
 }
 
@@ -39,16 +40,14 @@ pub fn map_tooltip(
     mut current_ent: Local<usize>,
     mut commands: Commands,
     assets: Res<AssetServer>,
-    windows: Res<Windows>,
+    window: Single<&mut Window>,
     mut terminal: ResMut<Terminal>,
-    buttons: Res<Input<MouseButton>>,
+    buttons: Res<ButtonInput<MouseButton>>,
     map: Res<Map>,
     query: Query<(&Position, Option<&ShipStats>, &GameName, Option<&Player>), With<Renderable>>,
     h_query: Query<Entity, With<MouseTooltip>>,
     c_query: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
 ) {
-    let window = windows.get_primary().unwrap();
-
     // Despawn all tooltips every, we will recreate them every frame
     // TODO: This is wasteful, in future reuse the entities
     for entity in h_query.iter() {
@@ -64,6 +63,7 @@ pub fn map_tooltip(
         // println!("Cursor at position x:{} y:{}", term_x, term_y);
 
         // Iterate through all map tiles, and check if mouse if is hovering over a tile
+        let mouse_coords = convert_cursor_to_world_coords(window, &c_query).unwrap();
         for (map_idx, _map_tile) in map.tiles.clone().into_iter().enumerate() {
             // Shift map_y_idx up so it is not covered by the game log. Nothing need to
             // be done with map_x_idx for now.
@@ -86,10 +86,10 @@ pub fn map_tooltip(
                     //     term_x_idx, term_y_idx, tile
                     // );
                     // println!("Entities found here: {:?}", entities);
-                    terminal.highlight_tiles(&[(terminal_idx, Color::PINK)]);
+                    terminal.highlight_tiles(&[(terminal_idx, css::PINK.into())]);
 
                     // Convert mouse coordinates to world coordinates
-                    let world_coords = convert_cursor_to_world_coords(&windows, &c_query).unwrap();
+                    let world_coords = mouse_coords;
 
                     // Entities found, check for mouse click, used to decide which entity to show
                     if entities.len() > 0 {
@@ -142,56 +142,38 @@ fn show_entity_info(
 ) {
     // TODO: This has not yet been tested yet for multiple entities on a single tile
 
-    let font = assets.load("square.ttf");
-
-    // Entities that are rendered should always have GameName, else panic
-    let name = &query.get_component::<GameName>(entity).unwrap().name;
-    let mut lines = vec![name.clone()];
-
-    if let Ok(ship_stats) = query.get_component::<ShipStats>(entity) {
-        lines.push(format!(
-            "HP: {}/{}",
-            ship_stats.curr_health, ship_stats.max_health
-        ));
-        lines.push(format!(
-            "SH: {}/{}",
-            ship_stats.curr_shields, ship_stats.max_shields
-        ));
-        lines.push(format!("SPD: {}", ship_stats.speed));
-    }
-
-    if let Ok(_) = query.get_component::<Player>(entity) {
-        // println!("Found the player!");
-    }
+    // if let Some(_) = query.get(entity).unwrap().3 {
+    // println!("Found the player!");
+    // }
 
     // Shift the tooltip so it isn't directly over the entity
-    let x = world_coords.x + 10.0;
-    let y = world_coords.y + 10.0;
+    // let x = world_coords.x + 10.0;
+    // let y = world_coords.y + 10.0;
 
     // Spawn Mousetooltip entity
-    commands
-        .spawn(Text2dBundle {
-            text: Text::from_section(
-                lines.join("\n"),
-                TextStyle {
-                    font,
-                    font_size: 18.0,
-                    color: Color::WHITE,
-                },
-            )
-            .with_alignment(TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Left,
-            }),
-            transform: Transform {
-                translation: Vec3::new(x, y, TEXT_LAYER),
-                scale: Vec3::ONE,
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(MouseTooltip)
-        .insert(Name::new("MouseTooltip"));
+    // commands
+    //     .spawn(Text2dBundle {
+    //         text: Text::from_section(
+    //             lines.join("\n"),
+    //             TextStyle {
+    //                 font,
+    //                 font_size: 18.0,
+    //                 color: Color::WHITE,
+    //             },
+    //         )
+    //         .with_alignment(TextAlignment {
+    //             vertical: VerticalAlign::Center,
+    //             horizontal: HorizontalAlign::Left,
+    //         }),
+    //         transform: Transform {
+    //             translation: Vec3::new(x, y, TEXT_LAYER),
+    //             scale: Vec3::ONE,
+    //             ..Default::default()
+    //         },
+    //         ..Default::default()
+    //     })
+    //     .insert(MouseTooltip)
+    //     .insert(Name::new("MouseTooltip"));
 
     // println!("{:?}", lines);
 }
@@ -204,49 +186,49 @@ fn show_tiletype(
 ) {
     // TODO: This has not yet been tested yet for multiple entities on a single tile
 
-    let font = assets.load("square.ttf");
+    // let font = assets.load("square.ttf");
 
     // Shift the tooltip so it isn't directly over the entity
-    let x = world_coords.x + 10.0;
-    let y = world_coords.y + 10.0;
+    // let x = world_coords.x + 10.0;
+    // let y = world_coords.y + 10.0;
 
-    let text: &str = {
-        match tile {
-            MapTileType::Placeholder => "DEBUG",
-            MapTileType::Wall => return, // Don't show anything for wall or space tiles
-            MapTileType::Space => return,
-            MapTileType::Wormhole => "Wormhole",
-            MapTileType::Planet => "Planet",
-            MapTileType::Star => "Star",
-            MapTileType::Moon => "Moon",
-            MapTileType::Asteroid => "Asteroid",
-        }
-    };
+    // let text: &str = {
+    //     match tile {
+    //         MapTileType::Placeholder => "DEBUG",
+    //         MapTileType::Wall => return, // Don't show anything for wall or space tiles
+    //         MapTileType::Space => return,
+    //         MapTileType::Wormhole => "Wormhole",
+    //         MapTileType::Planet => "Planet",
+    //         MapTileType::Star => "Star",
+    //         MapTileType::Moon => "Moon",
+    //         MapTileType::Asteroid => "Asteroid",
+    //     }
+    // };
 
     // Spawn Mousetooltip entity
-    commands
-        .spawn(Text2dBundle {
-            text: Text::from_section(
-                text,
-                TextStyle {
-                    font,
-                    font_size: 18.0,
-                    color: Color::WHITE,
-                },
-            )
-            .with_alignment(TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Left,
-            }),
-            transform: Transform {
-                translation: Vec3::new(x, y, TEXT_LAYER),
-                scale: Vec3::ONE,
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(MouseTooltip)
-        .insert(Name::new("MouseTooltip"));
+    // commands
+    //     .spawn(Text2dBundle {
+    //         text: Text::from_section(
+    //             text,
+    //             TextStyle {
+    //                 font,
+    //                 font_size: 18.0,
+    //                 color: Color::WHITE,
+    //             },
+    //         )
+    //         .with_alignment(TextAlignment {
+    //             vertical: VerticalAlign::Center,
+    //             horizontal: HorizontalAlign::Left,
+    //         }),
+    //         transform: Transform {
+    //             translation: Vec3::new(x, y, TEXT_LAYER),
+    //             scale: Vec3::ONE,
+    //             ..Default::default()
+    //         },
+    //         ..Default::default()
+    //     })
+    //     .insert(MouseTooltip)
+    //     .insert(Name::new("MouseTooltip"));
 
     // println!("{:?}", lines);
 }

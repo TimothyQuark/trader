@@ -22,7 +22,7 @@ use super::{terminal::GameLog, time::GameTime};
 /// Once system is done, transitions to the next state
 pub fn damage_system(
     mut commands: Commands,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut query: Query<(Entity, &mut ShipStats, &SufferDamage)>,
 ) {
     // println!("Damage System running!");
@@ -47,14 +47,14 @@ pub fn damage_system(
     }
 
     // Transition to next state, DeleteDead
-    state.set(AppState::DeleteDead).unwrap();
+    next_state.set(AppState::DeleteDead);
 }
 
 /// System that deletes entities if they have zero or subzero health.\
 /// Once completed, transitions to next state
 pub fn delete_the_dead(
     mut commands: Commands,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut log: ResMut<GameLog>,
     time: Res<GameTime>,
     ship_query: Query<
@@ -75,7 +75,7 @@ pub fn delete_the_dead(
 
     // println!("Deleting the Dead!");
 
-    let mut rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_rng(&mut rand::rng());
 
     for (entity, ship_stats, pos, player, name, pirate) in ship_query.iter() {
         if let Some(_) = player {
@@ -83,7 +83,7 @@ pub fn delete_the_dead(
                 println!("The player has died! Game over");
                 let s = format!("You have died! Game Over");
                 log.new_log(s, time.tick);
-                state.set(AppState::GameOver).unwrap();
+                next_state.set(AppState::GameOver);
                 return;
             }
         } else if ship_stats.curr_health < 1 {
@@ -94,7 +94,7 @@ pub fn delete_the_dead(
 
             // Check if pirate. Chance to spawn debris that can be looted for items
             if let Some(_) = pirate {
-                if rng.gen_bool(0.5) {
+                if rng.random_bool(0.5) {
                     println!("Pirate has spawned debris!");
                     spawn_debris(&mut commands, pos.x, pos.y);
                 }
@@ -103,5 +103,5 @@ pub fn delete_the_dead(
     }
 
     // Transition to next state, IncrementTime
-    state.set(AppState::RunTimers).unwrap();
+    next_state.set(AppState::RunTimers);
 }

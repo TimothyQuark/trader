@@ -1,4 +1,6 @@
+use bevy::color::palettes::css;
 use bevy::prelude::*;
+use bevy::sprite::Anchor;
 
 use super::{
     map::{wall_glyph, Map, MapTileType},
@@ -98,11 +100,11 @@ impl Default for Terminal {
             terminal_width,
             terminal_height,
             foreground_tiles: vec![
-                (0, Some(Color::BLUE));
+                (0, Some(css::BLUE.into()));
                 (screen_width / tile_size * screen_height / tile_size) as usize
             ],
             background_tiles: vec![
-                (0, Some(Color::PINK));
+                (0, Some(css::PINK.into()));
                 (screen_width / tile_size * screen_height / tile_size) as usize
             ],
             top_sidebar_height,
@@ -136,11 +138,11 @@ impl Terminal {
             terminal_width,
             terminal_height,
             foreground_tiles: vec![
-                (0, Some(Color::BLUE));
+                (0, Some(css::BLUE.into()));
                 (screen_width / tile_size * screen_height / tile_size) as usize
             ],
             background_tiles: vec![
-                (0, Some(Color::PINK));
+                (0, Some(css::PINK.into()));
                 (screen_width / tile_size * screen_height / tile_size) as usize
             ],
             top_sidebar_text: "This is default text".to_string(),
@@ -195,7 +197,7 @@ pub fn init_terminal(
     mut commands: Commands,
     assets: Res<AssetServer>,
     terminal: Res<Terminal>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     // Note that this system does not actually create the terminal resource,
     // that is done in the main app.
@@ -207,9 +209,9 @@ pub fn init_terminal(
     // Load the default tile sheet
     // Load sprite sheet into a texture atlas
     let texture_handle = assets.load("cp437_20x20_transparent.png");
-    let texture_atlas =
-        TextureAtlas::from_grid(texture_handle, Vec2::new(20.0, 20.0), 16, 16, None, None);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let texture_atlas_layout =
+        TextureAtlasLayout::from_grid(UVec2::new(20, 20), 16, 16, None, None);
+    let texture_atlas_layout_handle = texture_atlas_layouts.add(texture_atlas_layout);
 
     // Load the default font and text style, and add as a resource.
     // Note that resources may not be accessible to startup systems.
@@ -233,46 +235,50 @@ pub fn init_terminal(
             // println!("x:{}, y: {}", x, y);
 
             // Spawn foreground glyph tiles
-            commands
-                .spawn(SpriteSheetBundle {
-                    transform: Transform {
-                        // Translation is middle of sprite, hence iterator uses stuff like tile_size / 2.0 etc
-                        translation: Vec3::new(x as f32, y as f32, FOREGROUND_LAYER),
-                        scale: Vec3::splat(1.0),
-                        ..Default::default()
-                    },
-                    sprite: TextureAtlasSprite {
-                        color: Color::PINK,
-                        index: 10,
-                        ..Default::default()
-                    },
-                    texture_atlas: texture_atlas_handle.clone(),
+            commands.spawn((
+                Sprite {
+                    color: css::PINK.into(),
+                    ..Sprite::from_atlas_image(
+                        texture_handle.clone(), // Cloning the handle is cheap
+                        TextureAtlas {
+                            layout: texture_atlas_layout_handle.clone(), // Cloning the handle is cheap
+                            index: 3,                                    // Debug sprite
+                        },
+                    )
+                },
+                Transform {
+                    // Translation is middle of sprite, hence iterator uses stuff like tile_size / 2.0 etc
+                    translation: Vec3::new(x as f32, y as f32, FOREGROUND_LAYER),
+                    scale: Vec3::splat(1.0),
                     ..Default::default()
-                })
-                .insert(TerminalTile { idx })
-                .insert(ForegroundTile)
-                .insert(Name::new("ForegroundTile"));
+                },
+                TerminalTile { idx },
+                ForegroundTile,
+                Name::new("ForegroundTile"),
+            ));
 
             // Spawn background glyph tiles
-            commands
-                .spawn(SpriteSheetBundle {
-                    transform: Transform {
-                        // Translation is middle of sprite, hence iterator uses stuff like tile_size / 2.0 etc
-                        translation: Vec3::new(x as f32, y as f32, BACKGROUND_LAYER),
-                        scale: Vec3::splat(1.0),
-                        ..Default::default()
-                    },
-                    sprite: TextureAtlasSprite {
-                        color: Color::PINK,
-                        index: 10,
-                        ..Default::default()
-                    },
-                    texture_atlas: texture_atlas_handle.clone(),
+            commands.spawn((
+                Sprite {
+                    color: css::GREEN.into(),
+                    ..Sprite::from_atlas_image(
+                        texture_handle.clone(), // Cloning the handle is cheap
+                        TextureAtlas {
+                            layout: texture_atlas_layout_handle.clone(), // Cloning the handle is cheap
+                            index: 10,                                   // Debug sprite
+                        },
+                    )
+                },
+                Transform {
+                    // Translation is middle of sprite, hence iterator uses stuff like tile_size / 2.0 etc
+                    translation: Vec3::new(x as f32, y as f32, BACKGROUND_LAYER),
+                    scale: Vec3::splat(1.0),
                     ..Default::default()
-                })
-                .insert(TerminalTile { idx })
-                .insert(BackgroundTile)
-                .insert(Name::new("BackgroundTile"));
+                },
+                TerminalTile { idx },
+                BackgroundTile,
+                Name::new("BackgroundTile"),
+            ));
 
             idx += 1;
         }
@@ -280,16 +286,11 @@ pub fn init_terminal(
 
     // Spawn top sidebar text
     commands
-        .spawn(Text2dBundle {
-            text: Text::from_section(
-                "You should not be seeing this text",
-                default_text_style.clone(),
-            )
-            .with_alignment(TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Left,
-            }),
-            transform: Transform {
+        .spawn((
+            Text2d::new("You should not be seeing this text"),
+            default_text_style.clone(),
+            TextColor(Color::WHITE),
+            Transform {
                 translation: Vec3::new(
                     x_min as f32 - (terminal.tile_size / 2) as f32,
                     y_max as f32 - (terminal.tile_size / 2) as f32,
@@ -298,59 +299,51 @@ pub fn init_terminal(
                 scale: Vec3::ONE,
                 ..Default::default()
             },
-            ..Default::default()
-        })
+            Anchor::CENTER_LEFT,
+        ))
         .insert(TopSidebar)
         .insert(Name::new("TopSideBar"));
 
     // Spawn bottom sidebar text
+    let bottom_text = vec![
+            "------------------------------------- Add log text here (Should not see this text)\n"
+                .to_string();
+            terminal.bottom_sidebar_height as usize
+        ]
+    .join("");
     commands
-        .spawn(Text2dBundle {
-            text: Text {
-                sections: vec![
-                    TextSection {
-                        value: "------------------------------------- Add log text here (Should not see this text)\n".to_string(),
-                        style: default_text_style.clone(),
-                    };
-                    // Number of sections should be as many lines as in the log
-                    terminal.bottom_sidebar_height as usize
-                ],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Bottom,
-                    horizontal: HorizontalAlign::Left,
-                },
-            },
-            transform: Transform {
+        .spawn((
+            Text2d::new(bottom_text),
+            default_text_style.clone(),
+            TextColor(Color::WHITE),
+            Transform {
                 // translation: Vec3::new(-half_x as f32, (-half_y as f32) + BOTTOM_SIDEBAR, 0.0),
-                translation: Vec3::new(x_min as f32 - (terminal.tile_size as f32 / 2.0),y_min as f32 - (terminal.tile_size as f32 / 2.0), TEXT_LAYER),
+                translation: Vec3::new(
+                    x_min as f32 - (terminal.tile_size as f32 / 2.0),
+                    y_min as f32 - (terminal.tile_size as f32 / 2.0),
+                    TEXT_LAYER,
+                ),
                 scale: Vec3::ONE,
                 ..Default::default()
             },
-            ..Default::default()
-        })
+            Anchor::BOTTOM_LEFT,
+        ))
         .insert(BottomSidebar)
         .insert(Name::new("BottomSidebar"));
 
     // Spawn right sidebar text
+    let right_text = vec![
+        "Line on the right side (Should not see this text)\n".to_string();
+        (terminal.terminal_height - terminal.top_sidebar_height - terminal.bottom_sidebar_height)
+            as usize
+    ]
+    .join("");
     commands
-        .spawn(Text2dBundle {
-            text: Text {
-                sections: vec![
-                    TextSection {
-                        value: "Line on the right side (Should not see this text)\n".to_string(),
-                        style: default_text_style.clone(),
-                    };
-                    // Number of sections should be as many lines as in the log
-                    (terminal.terminal_height - terminal.top_sidebar_height - terminal.bottom_sidebar_height) as usize
-
-
-                ],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Top,
-                    horizontal: HorizontalAlign::Left,
-                },
-            },
-            transform: Transform {
+        .spawn((
+            Text2d::new(right_text),
+            default_text_style.clone(),
+            TextColor(Color::WHITE),
+            Transform {
                 // Start one line below the top sidebar so they do not overlap
                 translation: Vec3::new(
                     x_max as f32 - (terminal.right_sidebar_width * terminal.tile_size) as f32,
@@ -360,8 +353,8 @@ pub fn init_terminal(
                 scale: Vec3::ONE,
                 ..Default::default()
             },
-            ..Default::default()
-        })
+            Anchor::TOP_LEFT,
+        ))
         .insert(RightSidebar)
         .insert(Name::new("RightSidebar"));
 }
@@ -375,29 +368,28 @@ pub fn render_terminal(
     // QuerySet limited to 4 QueryState
     mut p: ParamSet<(
         Query<(
-            // &mut Transform,
-            &mut TextureAtlasSprite,
+            &mut Sprite,
             &TerminalTile,
             Option<&ForegroundTile>,
             Option<&BackgroundTile>,
         )>,
-        Query<&mut Text, With<TopSidebar>>,
-        Query<&mut Text, With<RightSidebar>>,
-        Query<&mut Text, With<BottomSidebar>>,
+        Query<&mut Text2d, With<TopSidebar>>,
+        Query<&mut Text2d, With<RightSidebar>>,
+        Query<&mut Text2d, With<BottomSidebar>>,
     )>,
 ) {
     // Update text of the top sidebar
-    p.p1().single_mut().sections[0].value = terminal.top_sidebar_text.clone();
+    // p.p1().single_mut().sections[0].value = terminal.top_sidebar_text.clone();
 
     // Update text of the right sidebar
-    for (idx, mut line) in p.p2().single_mut().sections.iter_mut().enumerate() {
-        line.value = terminal.right_sidebar_text[idx].clone();
-    }
+    // for (idx, mut line) in p.p2().single_mut().sections.iter_mut().enumerate() {
+    //     line.value = terminal.right_sidebar_text[idx].clone();
+    // }
 
     // Update text of the bottom sidebar
-    for (idx, mut line) in p.p3().single_mut().sections.iter_mut().enumerate() {
-        line.value = terminal.bottom_sidebar_text[idx].clone();
-    }
+    // for (idx, mut line) in p.p3().single_mut().sections.iter_mut().enumerate() {
+    //     line.value = terminal.bottom_sidebar_text[idx].clone();
+    // }
 
     // Update the contents of the tile layers (foreground_tiles and background_tiles) stored in the Terminal
     // that are used to render the map. By default, the map renders background to black
@@ -431,43 +423,43 @@ pub fn render_terminal(
                 MapTileType::Wall => {
                     terminal.foreground_tiles[terminal_idx].0 =
                         wall_glyph(&map, map_x_idx as i32, map_y_idx as i32) as usize;
-                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::BLUE);
+                    terminal.foreground_tiles[terminal_idx].1 = Some(css::BLUE.into());
                     terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
                     terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Placeholder => {
                     terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('↓');
-                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::GREEN);
+                    terminal.foreground_tiles[terminal_idx].1 = Some(css::GREEN.into());
                     terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
                     terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Planet => {
                     terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('O');
-                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::SEA_GREEN);
+                    terminal.foreground_tiles[terminal_idx].1 = Some(css::SEA_GREEN.into());
                     terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
                     terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Moon => {
                     terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('o');
-                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::GREEN);
+                    terminal.foreground_tiles[terminal_idx].1 = Some(css::GREEN.into());
                     terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
                     terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Wormhole => {
                     terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('!');
-                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::FUCHSIA);
+                    terminal.foreground_tiles[terminal_idx].1 = Some(css::FUCHSIA.into());
                     terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
                     terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Star => {
                     terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('$');
-                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::YELLOW);
+                    terminal.foreground_tiles[terminal_idx].1 = Some(css::YELLOW.into());
                     terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
                     terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
                 MapTileType::Asteroid => {
                     terminal.foreground_tiles[terminal_idx].0 = char_to_cp437('A');
-                    terminal.foreground_tiles[terminal_idx].1 = Some(Color::SILVER);
+                    terminal.foreground_tiles[terminal_idx].1 = Some(css::SILVER.into());
                     terminal.background_tiles[terminal_idx].0 = char_to_cp437('█');
                     terminal.background_tiles[terminal_idx].1 = Some(Color::BLACK);
                 }
@@ -516,12 +508,16 @@ pub fn render_terminal(
     for (mut sprite, tile, fg, bg) in p.p0().iter_mut() {
         // Tile to update is foreground
         if let Some(_) = fg {
-            sprite.index = terminal.foreground_tiles[tile.idx].0;
+            if let Some(ref mut atlas) = sprite.texture_atlas {
+                atlas.index = terminal.foreground_tiles[tile.idx].0;
+            }
             sprite.color = terminal.foreground_tiles[tile.idx].1.unwrap();
         }
         // Tile to update is background
         else if let Some(_) = bg {
-            sprite.index = terminal.background_tiles[tile.idx].0;
+            if let Some(ref mut atlas) = sprite.texture_atlas {
+                atlas.index = terminal.background_tiles[tile.idx].0;
+            }
             if let Some(color) = terminal.background_tiles[tile.idx].1 {
                 sprite.color = color;
             } else {
@@ -529,7 +525,7 @@ pub fn render_terminal(
                 // Sprite index has already been set to 219 previously
                 sprite.color = Color::BLACK;
             }
-            // println!("Rendering bg tile: index {}, color {:?}", sprite.index, sprite.color);
+            // println!("Rendering bg tile: index {}, color {:?}", sprite.color);
         } else {
             panic!("TerminalTile found that is missing an identification of its render layer");
         }
@@ -545,7 +541,9 @@ pub fn update_sidebars(
     query: Query<(&ShipStats, &GameName), With<Player>>,
 ) {
     // Player info
-    let (ship_stats, name) = query.single();
+    let Ok((ship_stats, name)) = query.single() else {
+        panic!("Found more than one player???");
+    };
 
     // Update top sidebar
     terminal.top_sidebar_text = String::from(format!("Turn: {}", time.tick));

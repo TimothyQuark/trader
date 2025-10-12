@@ -20,9 +20,9 @@ mod common;
 /// Since map building is complex and important, this System has its own folder
 pub fn build_new_map(
     mut commands: Commands,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut player_query: Query<&mut Position, With<Player>>,
-    d_query: Query<Entity, &DeleteOnNewLevel>, // Entities to delete
+    d_query: Query<Entity, With<DeleteOnNewLevel>>, // Entities to delete
 ) {
     println!("Building new map!");
 
@@ -60,19 +60,14 @@ pub fn build_new_map(
 
     // Move the player to starting position
     let player_pos = result.get_starting_position();
-    player_query.single_mut().x = player_pos.x;
-    player_query.single_mut().y = player_pos.y;
+    player_query.single_mut().unwrap().x = player_pos.x;
+    player_query.single_mut().unwrap().y = player_pos.y;
 
     // Spawn entities on the map
     result.spawn_entities(&mut commands);
 
-    // Change Game State to awaiting input. Should be last thing to occur in system
-    // println!("{:?}", state);
-    state.overwrite_replace(AppState::IncrementTime).unwrap();
-    // println!("{:?}", state);
-    // state.set(AppState::AwaitingInput).unwrap();
-
-    // println!("New map created and inserted as a resource");
+    // Change Game State to IncrementTime. Should be last thing to occur in system
+    next_state.set(AppState::IncrementTime);
 }
 
 pub trait MapBuilder {

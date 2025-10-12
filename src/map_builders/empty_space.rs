@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use rand::{
-    distributions::WeightedIndex, prelude::*, rngs::SmallRng, seq::IteratorRandom, Rng, SeedableRng,
+    distr::weighted::WeightedIndex, prelude::*, rngs::SmallRng, seq::IteratorRandom, Rng,
+    SeedableRng,
 };
 
 use super::{common::apply_room_to_map, Map, MapBuilder};
@@ -48,7 +49,7 @@ impl EmptySpaceBuilder {
     }
 
     fn build(&mut self) {
-        let mut rng = SmallRng::from_entropy();
+        let mut rng = SmallRng::from_rng(&mut rand::rng());
         // let mut rng = SmallRng::seed_from_u64(100); // Static seed
 
         // Create edge of map (explicit so player knows)
@@ -62,13 +63,13 @@ impl EmptySpaceBuilder {
 
         // Spawn 1-5 planets with different (i.e. unique) radii around star.
         // Don't spawn planets within 2 units of star, looks cleaner
-        let num_planets = rng.gen_range(0..=10);
+        let num_planets = rng.random_range(0..=10);
         // println!("Number of planets generated: {}", num_planets);
         // Planets must be inside of system wall (-2) and min 2 tiles away from star (3)
         let allowed_r = (3i32..i32::min(center_x - 2, center_y - 2)).collect::<Vec<_>>();
         let radii = allowed_r.iter().choose_multiple(&mut rng, num_planets);
         for &r in radii {
-            let angle: f64 = rng.gen_range(0.0..360.0);
+            let angle: f64 = rng.random_range(0.0..360.0);
             let planet_x: i32 = center_x + angle.cos().round() as i32 * r;
             let planet_y = center_y + angle.sin().round() as i32 * r;
             let planet_idx = self.map.xy_idx(planet_x, planet_y);
@@ -96,17 +97,17 @@ impl EmptySpaceBuilder {
         }
 
         // Spawn 1-40 asteroids (50% chance of no asteroids at all, 40% of light, 10% of heavy)
-        match rng.gen_bool(0.5) {
+        match rng.random_bool(0.5) {
             true => {
-                let num_asteroids = if rng.gen_bool(0.8) {
-                    rng.gen_range(1..=5) // Light asteroids
+                let num_asteroids = if rng.random_bool(0.8) {
+                    rng.random_range(1..=5) // Light asteroids
                 } else {
-                    rng.gen_range(20..=40) // Heavy asteroids
+                    rng.random_range(20..=40) // Heavy asteroids
                 };
                 for _ in 0..num_asteroids {
                     let mut tries = 0; // Try to place asteroid through brute force
                     'outer: while tries < 500 {
-                        let asteroid_idx = rng.gen_range(0..self.map.width * self.map.height);
+                        let asteroid_idx = rng.random_range(0..self.map.width * self.map.height);
                         let candidate = self.map.tiles[asteroid_idx as usize];
                         if candidate == MapTileType::Space {
                             self.map.tiles[asteroid_idx as usize] = MapTileType::Asteroid;
@@ -124,7 +125,7 @@ impl EmptySpaceBuilder {
 
         // Spawn wormhole in random location.
         for attempt in 0..500 {
-            let candidate_idx = rng.gen_range(0..self.map.total_tiles());
+            let candidate_idx = rng.random_range(0..self.map.total_tiles());
             if self.map.tiles[candidate_idx as usize] == MapTileType::Space {
                 self.map.tiles[candidate_idx as usize] = MapTileType::Wormhole;
                 break;
