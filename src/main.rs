@@ -43,6 +43,8 @@ use systems::{
     time::{increment_time, GameTime},
 };
 
+use crate::utilities::new_game;
+
 mod geometry;
 mod spawner;
 mod text;
@@ -85,23 +87,19 @@ fn main() {
             }),
             ..default()
         }))
-        // .add_plugins(WorldInspectorPlugin)
-        // .register_type::<Renderable>()
-        // .add_plugins(ResourceInspectorPlugin::<AppState>::default()) // Debug a resource
-        // .add_plugins(LogDiagnosticsPlugin::default())
-        // .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        // .add_systems(Update, debug_states)
-        // .init_resource::<ReportExecutionOrderAmbiguities>() // Use to look at execution order in LogPlugin
         // Resources
-        .insert_resource(ClearColor(Color::BLACK)) // App bg color. Will see if there are problems
+        .insert_resource(ClearColor(Color::BLACK)) // App bg color.
         .insert_resource(terminal)
         .insert_resource(GameTime { tick: 0 })
         .insert_resource(GameLog::default())
-        // .register_type::<AppState>() // use for ResourceInspectorPlugin
-        // Starting State
         .init_state::<AppState>()
+        // .register_type::<AppState>() // use for ResourceInspectorPlugin
         // Startup systems
-        .add_systems(Startup, (init_camera, init_terminal, init_map, init_player))
+        .add_systems(
+            Startup,
+            (init_camera, init_terminal, init_map, init_player),
+        )
+        .add_systems(PostStartup, new_game)
         // Render Systems (run every frame in Update schedule)
         // .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, render_terminal)

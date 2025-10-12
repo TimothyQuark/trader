@@ -1,3 +1,4 @@
+use crate::AppState;
 use bevy::prelude::*;
 
 use crate::components::rendering::MainCamera;
@@ -18,7 +19,10 @@ pub fn convert_cursor_to_world_coords(
         let window_size = Vec2::new(wnd.width() as f32, wnd.height() as f32);
 
         // convert screen position [0..resolution] to ndc [-1..1] (gpu coordinates)
+        // Note: screen Y is 0 at top and increases downward, but NDC Y is -1 at bottom and +1 at top
         let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
+        let ndc = Vec2::new(ndc.x, -ndc.y); // Flip Y axis
+        // println!("x {}, y {}", ndc.x, ndc.y);
 
         // matrix for undoing the projection and camera transform
         let ndc_to_world = camera_transform.to_matrix() * camera.clip_from_view().inverse();
@@ -34,4 +38,10 @@ pub fn convert_cursor_to_world_coords(
         // Cursor is not inside the window
         None
     }
+}
+
+/// Utility function that runs after Startup to start the game
+pub fn new_game(mut next_state: ResMut<NextState<AppState>>) {
+    println!("Starting a new game!");
+    next_state.set(AppState::NextLevel);
 }

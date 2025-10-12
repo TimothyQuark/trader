@@ -59,10 +59,11 @@ pub fn map_tooltip(
         let pix_x = position.x / terminal.tile_size as f32;
         let pix_y = position.y / terminal.tile_size as f32;
         let mouse_term_x = pix_x.floor() as u32;
-        let mouse_term_y = pix_y.floor() as u32;
+        // Invert Y because cursor_position has Y=0 at top, but terminal tiles are indexed from bottom
+        let mouse_term_y = (terminal.terminal_height - 1) - (pix_y.floor() as u32);
         // println!("Cursor at position x:{} y:{}", term_x, term_y);
 
-        // Iterate through all map tiles, and check if mouse if is hovering over a tile
+        // Iterate through all map tiles, and check if mouse is hovering over a tile
         let mouse_coords = convert_cursor_to_world_coords(window, &c_query).unwrap();
         for (map_idx, _map_tile) in map.tiles.clone().into_iter().enumerate() {
             // Shift map_y_idx up so it is not covered by the game log. Nothing need to
@@ -88,9 +89,6 @@ pub fn map_tooltip(
                     // println!("Entities found here: {:?}", entities);
                     terminal.highlight_tiles(&[(terminal_idx, css::PINK.into())]);
 
-                    // Convert mouse coordinates to world coordinates
-                    let world_coords = mouse_coords;
-
                     // Entities found, check for mouse click, used to decide which entity to show
                     if entities.len() > 0 {
                         // println!("current_ent: {}, entities.len: {}", *current_ent, entities.len());
@@ -101,7 +99,7 @@ pub fn map_tooltip(
 
                         // If mouse clicked enough, first show map tile type, and then wrap back to first entity
                         if entities.len() == *current_ent {
-                            show_tiletype(&mut commands, &assets, tile, world_coords);
+                            show_tiletype(&mut commands, &assets, tile, mouse_coords);
                         }
                         if entities.len() < *current_ent {
                             // Wrap around back to first entity if mouse clicked too many times
@@ -110,13 +108,13 @@ pub fn map_tooltip(
 
                         for (idx, e) in entities.iter().enumerate() {
                             if idx == *current_ent {
-                                show_entity_info(*e, &mut commands, &assets, &query, world_coords);
+                                show_entity_info(*e, &mut commands, &assets, &query, mouse_coords);
                             }
                         }
                     } else {
                         // There are no entities in this tile, reset counter to 0 and show type of tile
                         *current_ent = 0;
-                        show_tiletype(&mut commands, &assets, tile, world_coords);
+                        show_tiletype(&mut commands, &assets, tile, mouse_coords);
                     }
 
                     // map.tiles[map_idx] = MapTileType::Placeholder;
