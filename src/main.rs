@@ -95,16 +95,11 @@ fn main() {
         .init_state::<AppState>()
         // .register_type::<AppState>() // use for ResourceInspectorPlugin
         // Startup systems
-        .add_systems(
-            Startup,
-            (init_camera, init_terminal, init_map, init_player),
-        )
+        .add_systems(Startup, (init_camera, init_terminal, init_map, init_player))
         .add_systems(PostStartup, new_game)
         // Render Systems (run every frame in Update schedule)
         // .add_systems(Update, bevy::window::close_on_esc)
-        .add_systems(Update, render_terminal)
-        .add_systems(Update, update_sidebars)
-        .add_systems(Update, map_indexing)
+        .add_systems(Update, (render_terminal, update_sidebars, map_indexing))
         // Map tooltip system with run condition
         .add_systems(Update, map_tooltip.run_if(run_map_tooltip))
         // Inventory menu system

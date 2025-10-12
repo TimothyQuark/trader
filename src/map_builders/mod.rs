@@ -26,8 +26,7 @@ pub fn build_new_map(
 ) {
     println!("Building new map!");
 
-    // TODO: This should probably be broken out into its own system, which runs before map generator
-    // First, delete all entities with the delete flag
+    // First, delete all entities with the delete flag (might one day its own system)
     for entity in d_query.iter() {
         commands.entity(entity).despawn();
     }

@@ -30,6 +30,18 @@ pub struct BottomSidebar;
 #[derive(Component)]
 pub struct TopSidebar;
 
+/// Component to identify individual text lines in the RightSidebar
+#[derive(Component)]
+pub struct RightSidebarLine {
+    pub line_idx: usize,
+}
+
+/// Component to identify individual text lines in the BottomSidebar
+#[derive(Component)]
+pub struct BottomSidebarLine {
+    pub line_idx: usize,
+}
+
 /// Component that identifies entities that should be rendered to the terminal
 /// Not all Renderables have a background color (ex: Player)
 #[derive(Component, Reflect)]

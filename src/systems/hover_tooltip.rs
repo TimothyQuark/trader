@@ -47,8 +47,8 @@ pub fn map_tooltip(
     h_query: Query<Entity, With<MouseTooltip>>,
     c_query: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
 ) {
-    // Despawn all tooltips every, we will recreate them every frame
-    // TODO: This is wasteful, in future reuse the entities
+    // Despawn all tooltips, we will recreate them every frame
+    // This is wasteful, in future reuse the entities
     for entity in h_query.iter() {
         commands.entity(entity).despawn();
     }
@@ -76,7 +76,7 @@ pub fn map_tooltip(
                 && term_y_idx >= terminal.bottom_sidebar_height
             {
                 let tile = map.tiles[map_idx];
-                let entities = &map.tile_content[map_idx];
+                let entities = &map.tile_content[map_idx]; // Does not include terrain!
                 let terminal_idx = terminal.xy_idx(term_x_idx, term_y_idx);
 
                 // Mouse is over a map tile, highlight and check if there are entities there
@@ -107,7 +107,25 @@ pub fn map_tooltip(
 
                         for (idx, e) in entities.iter().enumerate() {
                             if idx == *current_ent {
-                                show_entity_info(*e, &mut commands, &assets, &query, mouse_coords);
+                                if entities.len() > 1 {
+                                    show_entity_info(
+                                        *e,
+                                        &mut commands,
+                                        &assets,
+                                        &query,
+                                        mouse_coords,
+                                        true,
+                                    );
+                                } else {
+                                    show_entity_info(
+                                        *e,
+                                        &mut commands,
+                                        &assets,
+                                        &query,
+                                        mouse_coords,
+                                        false,
+                                    );
+                                }
                             }
                         }
                     } else {
@@ -136,6 +154,7 @@ fn show_entity_info(
     assets: &Res<AssetServer>,
     query: &Query<(&Position, Option<&ShipStats>, &GameName, Option<&Player>), With<Renderable>>,
     world_coords: Vec2,
+    multi_entities: bool, // If more than 1 entity, add extra info line
 ) {
     // TODO: This has not yet been tested yet for multiple entities on a single tile
 
@@ -148,13 +167,23 @@ fn show_entity_info(
     let mut lines = vec![name.name.clone()];
 
     if let Some(stats) = ship_stats {
-        lines.push(format!("Health: {}/{}", stats.curr_health, stats.max_health));
-        lines.push(format!("Shields: {}/{}", stats.curr_shields, stats.max_shields));
+        lines.push(format!(
+            "Health: {}/{}",
+            stats.curr_health, stats.max_health
+        ));
+        lines.push(format!(
+            "Shields: {}/{}",
+            stats.curr_shields, stats.max_shields
+        ));
         lines.push(format!("Fuel: {}", stats.fuel));
     }
 
     if is_player.is_some() {
         lines.push("(Player)".to_string());
+    }
+
+    if (multi_entities) {
+        lines.push("(Click for more Info)".to_string());
     }
 
     let tooltip_text = lines.join("\n");

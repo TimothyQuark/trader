@@ -9,8 +9,8 @@ use super::{
 use crate::components::{
     common::GameName,
     rendering::{
-        BackgroundTile, BottomSidebar, ForegroundTile, Renderable, RightSidebar, TerminalTile,
-        TopSidebar,
+        BackgroundTile, BottomSidebar, BottomSidebarLine, ForegroundTile, Renderable, RightSidebar,
+        RightSidebarLine, TerminalTile, TopSidebar,
     },
 };
 use crate::components::{
@@ -34,7 +34,9 @@ pub struct GameLog {
 
 impl GameLog {
     pub fn new_log(&mut self, entry: String, time: u64) {
-        let s = format!("Turn {time}:  {entry}");
+        // Format turn number with 5 digits, padding with spaces on the left
+        // TODO: Pretty useless because square.ttf is not uniformly sized...
+        let s = format!("Turn {:>5}:  {entry}", time);
         self.entries.push(s);
     }
 }
@@ -304,20 +306,11 @@ pub fn init_terminal(
         .insert(TopSidebar)
         .insert(Name::new("TopSideBar"));
 
-    // Spawn bottom sidebar text
-    let bottom_text = vec![
-            "------------------------------------- Add log text here (Should not see this text)\n"
-                .to_string();
-            terminal.bottom_sidebar_height as usize
-        ]
-    .join("");
-    commands
+    // Spawn bottom sidebar text with child entities for each line
+    let bottom_sidebar_entity = commands
         .spawn((
-            Text2d::new(bottom_text),
-            default_text_style.clone(),
-            TextColor(Color::WHITE),
+            BottomSidebar,
             Transform {
-                // translation: Vec3::new(-half_x as f32, (-half_y as f32) + BOTTOM_SIDEBAR, 0.0),
                 translation: Vec3::new(
                     x_min as f32 - (terminal.tile_size as f32 / 2.0),
                     y_min as f32 - (terminal.tile_size as f32 / 2.0),
@@ -326,23 +319,45 @@ pub fn init_terminal(
                 scale: Vec3::ONE,
                 ..Default::default()
             },
-            Anchor::BOTTOM_LEFT,
+            Visibility::default(),
+            Name::new("BottomSidebar"),
         ))
-        .insert(BottomSidebar)
-        .insert(Name::new("BottomSidebar"));
+        .id();
 
-    // Spawn right sidebar text
-    let right_text = vec![
-        "Line on the right side (Should not see this text)\n".to_string();
-        (terminal.terminal_height - terminal.top_sidebar_height - terminal.bottom_sidebar_height)
-            as usize
-    ]
-    .join("");
-    commands
+    // Create child text entities for each line
+    for line_idx in 0..terminal.bottom_sidebar_height as usize {
+        let child_entity = commands
+            .spawn((
+                Text2d::new("------------------------------------- Add log text here (Should not see this text)\n"),
+                default_text_style.clone(),
+                TextColor(Color::WHITE),
+                Transform {
+                    translation: Vec3::new(
+                        0.0,
+                        (terminal.bottom_sidebar_height as f32 - line_idx as f32 - 1.0)
+                            * terminal.tile_size as f32,
+                        0.0,
+                    ),
+                    scale: Vec3::ONE,
+                    ..Default::default()
+                },
+                Anchor::BOTTOM_LEFT,
+                BottomSidebarLine { line_idx },
+                Name::new(format!("BottomSidebarLine_{}", line_idx)),
+            ))
+            .id();
+        commands
+            .entity(bottom_sidebar_entity)
+            .add_child(child_entity);
+    }
+
+    // Spawn right sidebar text with child entities for each line
+    let num_right_lines = (terminal.terminal_height
+        - terminal.top_sidebar_height
+        - terminal.bottom_sidebar_height) as usize;
+    let right_sidebar_entity = commands
         .spawn((
-            Text2d::new(right_text),
-            default_text_style.clone(),
-            TextColor(Color::WHITE),
+            RightSidebar,
             Transform {
                 // Start one line below the top sidebar so they do not overlap
                 translation: Vec3::new(
@@ -353,10 +368,36 @@ pub fn init_terminal(
                 scale: Vec3::ONE,
                 ..Default::default()
             },
-            Anchor::TOP_LEFT,
+            Visibility::default(),
+            Name::new("RightSidebar"),
         ))
-        .insert(RightSidebar)
-        .insert(Name::new("RightSidebar"));
+        .id();
+
+    // Create child text entities for each line
+    for line_idx in 0..num_right_lines {
+        let child_entity = commands
+            .spawn((
+                Text2d::new("Line on the right side (Should not see this text)\n"),
+                default_text_style.clone(),
+                TextColor(Color::WHITE),
+                Transform {
+                    translation: Vec3::new(
+                        0.0,
+                        -(line_idx as f32) * terminal.tile_size as f32,
+                        0.0,
+                    ),
+                    scale: Vec3::ONE,
+                    ..Default::default()
+                },
+                Anchor::TOP_LEFT,
+                RightSidebarLine { line_idx },
+                Name::new(format!("RightSidebarLine_{}", line_idx)),
+            ))
+            .id();
+        commands
+            .entity(right_sidebar_entity)
+            .add_child(child_entity);
+    }
 }
 
 /// System that renders the terminal every frame.
@@ -374,22 +415,26 @@ pub fn render_terminal(
             Option<&BackgroundTile>,
         )>,
         Query<&mut Text2d, With<TopSidebar>>,
-        Query<&mut Text2d, With<RightSidebar>>,
-        Query<&mut Text2d, With<BottomSidebar>>,
+        Query<(&mut Text2d, &RightSidebarLine)>,
+        Query<(&mut Text2d, &BottomSidebarLine)>,
     )>,
 ) {
     // Update text of the top sidebar
     p.p1().single_mut().unwrap().0 = terminal.top_sidebar_text.clone();
 
-    // Update text of the right sidebar
-    // for (idx, mut line) in p.p2().single_mut().sections.iter_mut().enumerate() {
-    //     line.value = terminal.right_sidebar_text[idx].clone();
-    // }
+    // Update text of the right sidebar child lines
+    for (mut text, line) in p.p2().iter_mut() {
+        if line.line_idx < terminal.right_sidebar_text.len() {
+            text.0 = terminal.right_sidebar_text[line.line_idx].clone();
+        }
+    }
 
-    // Update text of the bottom sidebar
-    // for (idx, mut line) in p.p3().single_mut().sections.iter_mut().enumerate() {
-    //     line.value = terminal.bottom_sidebar_text[idx].clone();
-    // }
+    // Update text of the bottom sidebar child lines
+    for (mut text, line) in p.p3().iter_mut() {
+        if line.line_idx < terminal.bottom_sidebar_text.len() {
+            text.0 = terminal.bottom_sidebar_text[line.line_idx].clone();
+        }
+    }
 
     // Update the contents of the tile layers (foreground_tiles and background_tiles) stored in the Terminal
     // that are used to render the map. By default, the map renders background to black

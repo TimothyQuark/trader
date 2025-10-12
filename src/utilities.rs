@@ -5,7 +5,6 @@ use crate::components::rendering::MainCamera;
 
 // General functions that are used throughout the project
 
-// TODO: Really this should be inside camera.rs
 pub fn convert_cursor_to_world_coords(
     wnd: Single<&mut Window>,
     q_camera: &Query<(&Camera, &GlobalTransform), With<MainCamera>>,
@@ -22,7 +21,6 @@ pub fn convert_cursor_to_world_coords(
         // Note: screen Y is 0 at top and increases downward, but NDC Y is -1 at bottom and +1 at top
         let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
         let ndc = Vec2::new(ndc.x, -ndc.y); // Flip Y axis
-        // println!("x {}, y {}", ndc.x, ndc.y);
 
         // matrix for undoing the projection and camera transform
         let ndc_to_world = camera_transform.to_matrix() * camera.clip_from_view().inverse();
