@@ -1,4 +1,3 @@
-use bevy::color::palettes::basic;
 use bevy::color::palettes::css;
 use bevy::prelude::*;
 
@@ -140,40 +139,52 @@ fn show_entity_info(
 ) {
     // TODO: This has not yet been tested yet for multiple entities on a single tile
 
-    // if let Some(_) = query.get(entity).unwrap().3 {
-    // println!("Found the player!");
-    // }
+    // Get entity information
+    let Ok((_, ship_stats, name, is_player)) = query.get(entity) else {
+        panic!("Trying to show info of an entity that does not exist???");
+    };
+
+    // Build information lines
+    let mut lines = vec![name.name.clone()];
+
+    if let Some(stats) = ship_stats {
+        lines.push(format!("Health: {}/{}", stats.curr_health, stats.max_health));
+        lines.push(format!("Shields: {}/{}", stats.curr_shields, stats.max_shields));
+        lines.push(format!("Fuel: {}", stats.fuel));
+    }
+
+    if is_player.is_some() {
+        lines.push("(Player)".to_string());
+    }
+
+    let tooltip_text = lines.join("\n");
 
     // Shift the tooltip so it isn't directly over the entity
-    // let x = world_coords.x + 10.0;
-    // let y = world_coords.y + 10.0;
+    let x = world_coords.x + 10.0;
+    let y = world_coords.y + 10.0;
+
+    // Load font
+    let font = assets.load("square.ttf");
 
     // Spawn Mousetooltip entity
-    // commands
-    //     .spawn(Text2dBundle {
-    //         text: Text::from_section(
-    //             lines.join("\n"),
-    //             TextStyle {
-    //                 font,
-    //                 font_size: 18.0,
-    //                 color: Color::WHITE,
-    //             },
-    //         )
-    //         .with_alignment(TextAlignment {
-    //             vertical: VerticalAlign::Center,
-    //             horizontal: HorizontalAlign::Left,
-    //         }),
-    //         transform: Transform {
-    //             translation: Vec3::new(x, y, TEXT_LAYER),
-    //             scale: Vec3::ONE,
-    //             ..Default::default()
-    //         },
-    //         ..Default::default()
-    //     })
-    //     .insert(MouseTooltip)
-    //     .insert(Name::new("MouseTooltip"));
-
-    // println!("{:?}", lines);
+    commands
+        .spawn((
+            Text2d::new(tooltip_text),
+            TextFont {
+                font,
+                font_size: 18.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            Transform {
+                translation: Vec3::new(x, y, TEXT_LAYER),
+                scale: Vec3::ONE,
+                ..Default::default()
+            },
+            bevy::sprite::Anchor::CENTER_LEFT,
+        ))
+        .insert(MouseTooltip)
+        .insert(Name::new("MouseTooltip"));
 }
 
 fn show_tiletype(
@@ -184,49 +195,41 @@ fn show_tiletype(
 ) {
     // TODO: This has not yet been tested yet for multiple entities on a single tile
 
-    // let font = assets.load("square.ttf");
+    let text: &str = match tile {
+        MapTileType::Placeholder => "DEBUG",
+        MapTileType::Wall => return, // Don't show anything for wall or space tiles
+        MapTileType::Space => return,
+        MapTileType::Wormhole => "Wormhole",
+        MapTileType::Planet => "Planet",
+        MapTileType::Star => "Star",
+        MapTileType::Moon => "Moon",
+        MapTileType::Asteroid => "Asteroid",
+    };
 
     // Shift the tooltip so it isn't directly over the entity
-    // let x = world_coords.x + 10.0;
-    // let y = world_coords.y + 10.0;
+    let x = world_coords.x + 10.0;
+    let y = world_coords.y + 10.0;
 
-    // let text: &str = {
-    //     match tile {
-    //         MapTileType::Placeholder => "DEBUG",
-    //         MapTileType::Wall => return, // Don't show anything for wall or space tiles
-    //         MapTileType::Space => return,
-    //         MapTileType::Wormhole => "Wormhole",
-    //         MapTileType::Planet => "Planet",
-    //         MapTileType::Star => "Star",
-    //         MapTileType::Moon => "Moon",
-    //         MapTileType::Asteroid => "Asteroid",
-    //     }
-    // };
+    // Load font
+    let font = assets.load("square.ttf");
 
     // Spawn Mousetooltip entity
-    // commands
-    //     .spawn(Text2dBundle {
-    //         text: Text::from_section(
-    //             text,
-    //             TextStyle {
-    //                 font,
-    //                 font_size: 18.0,
-    //                 color: Color::WHITE,
-    //             },
-    //         )
-    //         .with_alignment(TextAlignment {
-    //             vertical: VerticalAlign::Center,
-    //             horizontal: HorizontalAlign::Left,
-    //         }),
-    //         transform: Transform {
-    //             translation: Vec3::new(x, y, TEXT_LAYER),
-    //             scale: Vec3::ONE,
-    //             ..Default::default()
-    //         },
-    //         ..Default::default()
-    //     })
-    //     .insert(MouseTooltip)
-    //     .insert(Name::new("MouseTooltip"));
-
-    // println!("{:?}", lines);
+    commands
+        .spawn((
+            Text2d::new(text),
+            TextFont {
+                font,
+                font_size: 18.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            Transform {
+                translation: Vec3::new(x, y, TEXT_LAYER),
+                scale: Vec3::ONE,
+                ..Default::default()
+            },
+            bevy::sprite::Anchor::CENTER_LEFT,
+        ))
+        .insert(MouseTooltip)
+        .insert(Name::new("MouseTooltip"));
 }

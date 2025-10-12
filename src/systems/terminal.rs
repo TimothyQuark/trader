@@ -379,7 +379,7 @@ pub fn render_terminal(
     )>,
 ) {
     // Update text of the top sidebar
-    // p.p1().single_mut().sections[0].value = terminal.top_sidebar_text.clone();
+    p.p1().single_mut().unwrap().0 = terminal.top_sidebar_text.clone();
 
     // Update text of the right sidebar
     // for (idx, mut line) in p.p2().single_mut().sections.iter_mut().enumerate() {
