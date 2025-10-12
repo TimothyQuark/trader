@@ -78,7 +78,7 @@ pub fn player_input(
 
     // No longer needed as IncrementTime skips player systems if WaitTime is not 0.
     // Instead, panic if this is not true
-    if set.p0().single_mut().unwrap().2.as_mut().turns > 0 {
+    if set.p0().single().unwrap().2.turns > 0 {
         panic!("Player's WaitTime is not 0, but we are taking a player turn!");
     }
     // // Player WaitingTime is not 0, so transition to IncrementTime
