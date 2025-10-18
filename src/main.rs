@@ -33,6 +33,7 @@ use systems::{
     // debugging::debug_states,
     input::player_input,
     inventory::inventory_menu,
+    main_menu::{button_system, cleanup_menu, setup_main_menu},
     map::init_map,
     map_indexing::map_indexing,
     melee::melee_combat_system,
@@ -55,8 +56,8 @@ mod utilities;
 // #[reflect(Resource, InspectorOptions)]
 pub enum AppState {
     #[default]
-    LoadGame, // Basically everything that falls into StartUp
     MainMenu,
+    LoadGame,
     NewGame,
     NextLevel,
     AwaitingInput,
@@ -96,7 +97,11 @@ fn main() {
         // .register_type::<AppState>() // use for ResourceInspectorPlugin
         // Startup systems
         .add_systems(Startup, (init_camera, init_terminal, init_map, init_player))
-        .add_systems(PostStartup, new_game)
+        // Main menu systems
+        .add_systems(OnEnter(AppState::MainMenu), setup_main_menu)
+        .add_systems(Update, button_system.run_if(in_state(AppState::MainMenu)))
+        .add_systems(OnExit(AppState::MainMenu), cleanup_menu)
+        // .add_systems(PostStartup, new_game)
         // Render Systems (run every frame in Update schedule)
         // .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, (render_terminal, update_sidebars, map_indexing))

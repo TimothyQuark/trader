@@ -204,7 +204,7 @@ pub fn init_terminal(
     // Note that this system does not actually create the terminal resource,
     // that is done in the main app.
 
-    // println!("Initializing the terminal");
+    println!("Initializing the terminal");
 
     // println!("{}", terminal.get_screen_dim().0);
 

@@ -8,6 +8,7 @@ use crate::{
         rendering::{MainCamera, MouseTooltip, Renderable},
         ships::{Player, ShipStats},
     },
+    text::{FONT_PATH, FONT_SIZE},
     utilities::convert_cursor_to_world_coords,
     AppState,
 };
@@ -193,7 +194,7 @@ fn show_entity_info(
     let y = world_coords.y + 10.0;
 
     // Load font
-    let font = assets.load("square.ttf");
+    let font = assets.load(FONT_PATH);
 
     // Spawn Mousetooltip entity
     commands
@@ -201,7 +202,7 @@ fn show_entity_info(
             Text2d::new(tooltip_text),
             TextFont {
                 font,
-                font_size: 18.0,
+                font_size: FONT_SIZE,
                 ..default()
             },
             TextColor(Color::WHITE),
@@ -240,7 +241,7 @@ fn show_tiletype(
     let y = world_coords.y + 10.0;
 
     // Load font
-    let font = assets.load("square.ttf");
+    let font = assets.load(FONT_PATH);
 
     // Spawn Mousetooltip entity
     commands
@@ -248,7 +249,7 @@ fn show_tiletype(
             Text2d::new(text),
             TextFont {
                 font,
-                font_size: 18.0,
+                font_size: FONT_SIZE,
                 ..default()
             },
             TextColor(Color::WHITE),

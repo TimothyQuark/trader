@@ -27,3 +27,5 @@ pub mod hover_tooltip;
 pub mod regen;
 
 pub mod inventory;
+
+pub mod main_menu;

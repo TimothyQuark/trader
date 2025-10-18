@@ -2,6 +2,11 @@ use bevy::prelude::*;
 
 // This module contains useful boilerplate code and structs for the text in DWorld
 
+/// Default font file path - change this to switch fonts
+/// Options: "square.ttf" or "Ac437_IBM_VGA_8x16.ttf"
+pub const FONT_PATH: &str = "Ac437_IBM_BIOS.ttf";
+pub const FONT_SIZE: f32 = 14.0;
+
 /// Default Font used by Dworld
 // pub struct DefaultFont(pub Handle<Font>);
 
@@ -11,11 +16,11 @@ pub struct DefaultTextStyle(pub TextFont);
 
 /// Loads the default font in DWorld, and returns the default text style
 pub fn default_textstyle(assets: Res<AssetServer>) -> TextFont {
-    let font = assets.load("square.ttf");
+    let font = assets.load(FONT_PATH);
     TextFont {
         font,
         // Font size is not in pixels, or there is padding between sections. Hence, smaller than TILESIZE, this was fitted manually
-        font_size: 18.1,
+        font_size: FONT_SIZE,
         ..Default::default()
     }
 }
